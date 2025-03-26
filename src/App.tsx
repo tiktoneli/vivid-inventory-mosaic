@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import ProductManagement from "./components/pages/ProductManagement";
 import InventoryControl from "./components/pages/InventoryControl";
 import CategoryManagement from "./components/pages/CategoryManagement";
+import Dashboard from "./components/pages/Dashboard";
 
 // Create a wrapper component to add layout to pages
 import Navbar from "./components/layout/Navbar";
@@ -36,6 +37,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/dashboard" element={
+            <PageWrapper>
+              <Dashboard />
+            </PageWrapper>
+          } />
           <Route path="/products" element={
             <PageWrapper>
               <ProductManagement />

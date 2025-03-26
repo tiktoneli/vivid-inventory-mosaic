@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import StatsCard from '@/components/ui/StatsCard';
-import { BarChart, LineChart, PieChart } from '@/components/ui/chart';
+import { BarChart, LineChart, PieChart } from '@/components/ui/charts';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, ArrowUpRight, Box, DollarSign, Package, TrendingUp, Users } from 'lucide-react';
@@ -103,7 +103,7 @@ const Dashboard = () => {
             change="+12"
             status="increase"
             description="from last month"
-            icon={<Box />}
+            icon={<Box className="h-5 w-5" />}
           />
           <StatsCard
             title="Inventory Value"
@@ -111,7 +111,7 @@ const Dashboard = () => {
             change="+8.2%"
             status="increase"
             description="from last month"
-            icon={<DollarSign />}
+            icon={<DollarSign className="h-5 w-5" />}
           />
           <StatsCard
             title="Low Stock Items"
@@ -119,7 +119,7 @@ const Dashboard = () => {
             change="+3"
             status="decrease"
             description="from last week"
-            icon={<AlertCircle />}
+            icon={<AlertCircle className="h-5 w-5" />}
           />
           <StatsCard
             title="Total Users"
@@ -127,7 +127,7 @@ const Dashboard = () => {
             change="+2"
             status="increase"
             description="new this month"
-            icon={<Users />}
+            icon={<Users className="h-5 w-5" />}
           />
         </div>
       </section>
