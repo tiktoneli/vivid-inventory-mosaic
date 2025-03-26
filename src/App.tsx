@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 // Import pages components
 import ProductManagement from "./components/pages/ProductManagement";
 import InventoryControl from "./components/pages/InventoryControl";
+import CategoryManagement from "./components/pages/CategoryManagement";
 
 // Create a wrapper component to add layout to pages
 import Navbar from "./components/layout/Navbar";
@@ -38,6 +39,11 @@ const App = () => (
           <Route path="/products" element={
             <PageWrapper>
               <ProductManagement />
+            </PageWrapper>
+          } />
+          <Route path="/categories" element={
+            <PageWrapper>
+              <CategoryManagement />
             </PageWrapper>
           } />
           <Route path="/inventory" element={

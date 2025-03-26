@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
-import { Plus, Search, Filter, ArrowUpDown, Download, Upload, Trash } from 'lucide-react';
+import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import ProductForm from '../ui/ProductForm';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const ProductManagement = () => {
   // Mock product data
@@ -13,7 +14,8 @@ const ProductManagement = () => {
     {
       id: '1',
       name: 'Premium Bluetooth Headphones',
-      category: 'Electronics',
+      category: '1', // Electronics
+      categoryName: 'Electronics',
       sku: 'BT-HDPH-001',
       location: 'Warehouse A',
       stock: 45,
@@ -21,12 +23,16 @@ const ProductManagement = () => {
       price: 129.99,
       description: 'High-quality wireless headphones with noise cancellation',
       dateCreated: '2023-04-15',
-      isActive: true
+      isActive: true,
+      manufacturer: 'Audio Tech',
+      serialNumber: 'AT-0012345',
+      warrantyInfo: '2 years limited warranty'
     },
     {
       id: '2',
       name: 'Ergonomic Office Chair',
-      category: 'Furniture',
+      category: '4', // Office Equipment
+      categoryName: 'Office Equipment',
       sku: 'FRN-CHR-021',
       location: 'Warehouse B',
       stock: 12,
@@ -34,12 +40,15 @@ const ProductManagement = () => {
       price: 249.99,
       description: 'Adjustable office chair with lumbar support',
       dateCreated: '2023-05-22',
-      isActive: true
+      isActive: true,
+      manufacturer: 'Office Pro',
+      warrantyInfo: '5 years warranty'
     },
     {
       id: '3',
       name: 'Ultra HD Smart TV 55"',
-      category: 'Electronics',
+      category: '1', // Electronics
+      categoryName: 'Electronics',
       sku: 'TV-UHD-055',
       location: 'Warehouse A',
       stock: 8,
@@ -47,80 +56,85 @@ const ProductManagement = () => {
       price: 899.99,
       description: '4K smart television with HDR support',
       dateCreated: '2023-06-10',
+      isActive: true,
+      manufacturer: 'Vision Electronics',
+      serialNumber: 'VE-78901234',
+      warrantyInfo: '1 year warranty'
+    },
+    {
+      id: '4',
+      name: 'Network Switch 24 Port',
+      category: '2', // Networking
+      categoryName: 'Networking',
+      sku: 'NET-SWT-024',
+      location: 'Warehouse C',
+      stock: 15,
+      minStock: 5,
+      price: 189.99,
+      description: '24-port gigabit managed switch',
+      dateCreated: '2023-07-15',
+      isActive: true,
+      manufacturer: 'NetGear',
+      macAddress: '00:1A:2B:3C:4D:5E',
+      serialNumber: 'NG-45678901',
+      networkSpecs: 'Gigabit Ethernet, PoE+'
+    },
+    {
+      id: '5',
+      name: 'CAD Software License',
+      category: '3', // Software
+      categoryName: 'Software',
+      sku: 'SW-CAD-001',
+      location: 'Server Room',
+      stock: 25,
+      minStock: 10,
+      price: 1299.99,
+      description: 'Professional CAD software for engineering',
+      dateCreated: '2023-08-05',
+      isActive: false,
+      licenseKeys: 'Multiple license keys stored in secure vault',
+      compatibilityInfo: 'Windows 10/11, macOS 12+',
+      lifecycleStatus: 'Current'
+    }
+  ];
+
+  // Mock categories with their optional attributes
+  const initialCategories = [
+    {
+      id: '1',
+      name: 'Electronics',
+      description: 'Electronic devices and equipment',
+      attributes: ['manufacturer', 'serialNumber', 'warrantyInfo', 'firmwareVersion'],
+      isActive: true
+    },
+    {
+      id: '2',
+      name: 'Networking',
+      description: 'Networking equipment and accessories',
+      attributes: ['manufacturer', 'macAddress', 'networkSpecs', 'licenseKeys'],
+      isActive: true
+    },
+    {
+      id: '3',
+      name: 'Software',
+      description: 'Software products and licenses',
+      attributes: ['licenseKeys', 'compatibilityInfo', 'lifecycleStatus'],
       isActive: true
     },
     {
       id: '4',
-      name: 'Stainless Steel Water Bottle',
-      category: 'Kitchen',
-      sku: 'KIT-BTL-118',
-      location: 'Warehouse C',
-      stock: 86,
-      minStock: 20,
-      price: 24.99,
-      description: 'Double-walled insulated water bottle',
-      dateCreated: '2023-03-05',
+      name: 'Office Equipment',
+      description: 'Office equipment and supplies',
+      attributes: ['manufacturer', 'warrantyInfo', 'powerConsumption'],
       isActive: true
-    },
-    {
-      id: '5',
-      name: 'Professional DSLR Camera',
-      category: 'Electronics',
-      sku: 'ELEC-CAM-001',
-      location: 'Warehouse A',
-      stock: 15,
-      minStock: 8,
-      price: 1299.99,
-      description: 'High-end digital camera for professional photography',
-      dateCreated: '2023-07-12',
-      isActive: false
-    },
-    {
-      id: '6',
-      name: 'Wireless Charging Pad',
-      category: 'Electronics',
-      sku: 'ELEC-CHG-005',
-      location: 'Warehouse B',
-      stock: 34,
-      minStock: 15,
-      price: 49.99,
-      description: 'Fast wireless charger compatible with most devices',
-      dateCreated: '2023-08-03',
-      isActive: true
-    },
-    {
-      id: '7',
-      name: 'Ceramic Coffee Mug Set',
-      category: 'Kitchen',
-      sku: 'KIT-MUG-201',
-      location: 'Warehouse C',
-      stock: 5,
-      minStock: 20,
-      price: 39.99,
-      description: 'Set of 4 ceramic coffee mugs with modern design',
-      dateCreated: '2023-06-25',
-      isActive: true
-    },
-    {
-      id: '8',
-      name: 'Smart Home Security System',
-      category: 'Electronics',
-      sku: 'ELEC-SEC-108',
-      location: 'Warehouse A',
-      stock: 23,
-      minStock: 10,
-      price: 349.99,
-      description: 'Complete home security system with cameras and sensors',
-      dateCreated: '2023-09-01',
-      isActive: true
-    },
+    }
   ];
 
-  // Mock categories and locations for the form
-  const categories = ['Electronics', 'Furniture', 'Kitchen', 'Networking', 'Software', 'Hardware', 'Peripherals', 'Storage'];
+  // Mock locations
   const locations = ['Warehouse A', 'Warehouse B', 'Warehouse C', 'Office Storage', 'Server Room', 'IT Department'];
 
   const [products, setProducts] = useState(initialProducts);
+  const [categories] = useState(initialCategories);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -172,13 +186,18 @@ const ProductManagement = () => {
   };
 
   const handleFormSubmit = (values: any) => {
+    // Get category name based on category ID
+    const category = categories.find(c => c.id === values.category);
+    const categoryName = category ? category.name : '';
+    
     if (editingProduct) {
       // Update existing product
       setProducts(products.map(p => 
         p.id === editingProduct.id ? { 
           ...p, 
           ...values,
-          price: values.unitCost || p.price, // Map unitCost to price for this example
+          categoryName,
+          price: values.unitCost || p.price
         } : p
       ));
     } else {
@@ -186,8 +205,9 @@ const ProductManagement = () => {
       const newProduct = {
         id: `${Date.now()}`, // In a real app this would be generated by the backend
         ...values,
+        categoryName,
         dateCreated: new Date().toISOString().split('T')[0],
-        price: values.unitCost || 0, // Map unitCost to price for this example
+        price: values.unitCost || 0,
         isActive: true
       };
       setProducts([newProduct, ...products]);
@@ -207,7 +227,10 @@ const ProductManagement = () => {
   });
 
   // Get unique categories for filter
-  const uniqueCategories = ['All', ...new Set(products.map(product => product.category))];
+  const categoryOptions = [
+    { id: 'All', name: 'All Categories' },
+    ...categories.map(cat => ({ id: cat.id, name: cat.name }))
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -217,15 +240,23 @@ const ProductManagement = () => {
             <h1 className="text-3xl font-semibold tracking-tight mb-1 text-[#445372]">Products</h1>
             <p className="text-muted-foreground">Manage your product catalog</p>
           </div>
-          <button 
-            onClick={() => {
-              setEditingProduct(null);
-              setIsFormOpen(true);
-            }}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-[#00859e] text-white shadow hover:bg-[#00859e]/90 px-4 py-2 h-10"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Product
-          </button>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Link
+              to="/categories"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-10"
+            >
+              Manage Categories
+            </Link>
+            <button 
+              onClick={() => {
+                setEditingProduct(null);
+                setIsFormOpen(true);
+              }}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-[#00859e] text-white shadow hover:bg-[#00859e]/90 px-4 py-2 h-10"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Product
+            </button>
+          </div>
         </div>
       </section>
 
@@ -248,8 +279,8 @@ const ProductManagement = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              {uniqueCategories.map(category => (
-                <option key={category} value={category}>{category}</option>
+              {categoryOptions.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
               ))}
             </select>
             
@@ -300,7 +331,7 @@ const ProductManagement = () => {
                 key={product.id}
                 id={product.id}
                 name={product.name}
-                category={product.category}
+                category={product.categoryName}
                 sku={product.sku}
                 location={product.location}
                 stock={product.stock}
