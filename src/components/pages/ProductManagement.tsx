@@ -48,17 +48,11 @@ const ProductManagement = () => {
       // Update existing product
       updateProduct({
         id: editingProduct.id,
-        data: {
-          ...values,
-          price: values.unitCost || 0
-        }
+        data: values
       });
     } else {
       // Add new product
-      createProduct({
-        ...values,
-        price: values.unitCost || 0
-      });
+      createProduct(values);
     }
     
     setIsFormOpen(false);
@@ -184,22 +178,26 @@ const ProductManagement = () => {
           </div>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                category={product.categories?.name || "Uncategorized"}
-                sku={product.sku}
-                location={product.location}
-                stock={product.stock || 0}
-                minStock={product.min_stock}
-                description={product.description || ""}
-                isActive={product.is_active}
-                onEdit={handleEditProduct}
-                onDelete={handleDeleteProduct}
-              />
-            ))}
+            {filteredProducts.map((product) => {
+              const locationName = locations.find(loc => loc.id === product.location)?.name || "Unknown";
+              
+              return (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  category={product.categories?.name || "Uncategorized"}
+                  sku={product.sku}
+                  location={locationName}
+                  stock={product.stock || 0}
+                  minStock={product.min_stock}
+                  description={product.description || ""}
+                  isActive={product.is_active}
+                  onEdit={handleEditProduct}
+                  onDelete={handleDeleteProduct}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -232,7 +230,7 @@ const ProductManagement = () => {
               name: cat.name, 
               attributes: cat.attributes || [] 
             }))}
-            locations={locations.map(loc => loc.name)}
+            locations={locations}
             isEditing={!!editingProduct}
           />
         </DialogContent>

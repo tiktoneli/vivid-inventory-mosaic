@@ -16,33 +16,34 @@ const productSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   sku: z.string().min(3, { message: 'SKU must be at least 3 characters.' }),
   description: z.string().optional(),
-  category: z.string().min(1, { message: 'Category is required.' }),
+  category_id: z.string().min(1, { message: 'Category is required.' }),
   location: z.string().min(1, { message: 'Location is required.' }),
   stock: z.coerce.number().optional(),
-  minStock: z.coerce.number().min(0, { message: 'Minimum stock cannot be negative.' }),
+  min_stock: z.coerce.number().min(0, { message: 'Minimum stock cannot be negative.' }),
   
   // Optional fields
   manufacturer: z.string().optional(),
-  unitCost: z.coerce.number().min(0).optional(),
-  serialNumber: z.string().optional(),
-  macAddress: z.string().optional(),
-  warrantyInfo: z.string().optional(),
-  firmwareVersion: z.string().optional(),
-  licenseKeys: z.string().optional(),
-  compatibilityInfo: z.string().optional(),
-  networkSpecs: z.string().optional(),
-  powerConsumption: z.string().optional(),
-  lifecycleStatus: z.string().optional(),
+  price: z.coerce.number().min(0).optional(),
+  serial_number: z.string().optional(),
+  mac_address: z.string().optional(),
+  warranty_info: z.string().optional(),
+  firmware_version: z.string().optional(),
+  license_keys: z.string().optional(),
+  compatibility_info: z.string().optional(),
+  network_specs: z.string().optional(),
+  power_consumption: z.string().optional(),
+  lifecycle_status: z.string().optional(),
+  is_active: z.boolean().default(true),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
-  initialValues?: Partial<ProductFormValues>;
+  initialValues?: any;
   onSubmit: (values: ProductFormValues) => void;
   onCancel: () => void;
   categories: { id: string; name: string; attributes: string[] }[];
-  locations: string[];
+  locations: { id: string; name: string }[];
   isEditing?: boolean;
 }
 
@@ -58,33 +59,41 @@ const ProductForm = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [categoryAttributes, setCategoryAttributes] = useState<string[]>([]);
   
+  // Map form field names to match our schema
+  const mappedInitialValues = initialValues ? {
+    ...initialValues,
+    category_id: initialValues.category || initialValues.category_id,
+    price: initialValues.unitCost || initialValues.price,
+  } : undefined;
+  
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: initialValues || {
+    defaultValues: mappedInitialValues || {
       name: '',
       sku: '',
       description: '',
-      category: '',
+      category_id: '',
       location: '',
       stock: undefined,
-      minStock: 0,
+      min_stock: 0,
       manufacturer: '',
-      unitCost: undefined,
-      serialNumber: '',
-      macAddress: '',
-      warrantyInfo: '',
-      firmwareVersion: '',
-      licenseKeys: '',
-      compatibilityInfo: '',
-      networkSpecs: '',
-      powerConsumption: '',
-      lifecycleStatus: '',
+      price: undefined,
+      serial_number: '',
+      mac_address: '',
+      warranty_info: '',
+      firmware_version: '',
+      license_keys: '',
+      compatibility_info: '',
+      network_specs: '',
+      power_consumption: '',
+      lifecycle_status: '',
+      is_active: true,
     },
   });
 
   // When the category changes, update the available optional attributes
   useEffect(() => {
-    const categoryId = form.watch('category');
+    const categoryId = form.watch('category_id');
     if (categoryId) {
       const selectedCategory = categories.find(cat => cat.id === categoryId);
       if (selectedCategory) {
@@ -96,7 +105,7 @@ const ProductForm = ({
     } else {
       setCategoryAttributes([]);
     }
-  }, [form.watch('category'), categories]);
+  }, [form.watch('category_id'), categories]);
 
   const handleSubmit = (values: ProductFormValues) => {
     toast({
@@ -158,7 +167,7 @@ const ProductForm = ({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter product description" {...field} />
+                    <Textarea placeholder="Enter product description" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,7 +177,7 @@ const ProductForm = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="category"
+                name="category_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category *</FormLabel>
@@ -201,7 +210,7 @@ const ProductForm = ({
                       >
                         <option value="">Select location</option>
                         {locations.map(location => (
-                          <option key={location} value={location}>{location}</option>
+                          <option key={location.id} value={location.id}>{location.name}</option>
                         ))}
                       </select>
                     </FormControl>
@@ -219,7 +228,7 @@ const ProductForm = ({
                   <FormItem>
                     <FormLabel>Current Stock</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Current stock quantity" {...field} />
+                      <Input type="number" placeholder="Current stock quantity" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormDescription>
                       Leave empty to set later with a stock movement
@@ -231,7 +240,7 @@ const ProductForm = ({
               
               <FormField
                 control={form.control}
-                name="minStock"
+                name="min_stock"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Minimum Stock *</FormLabel>
@@ -268,7 +277,7 @@ const ProductForm = ({
                           <FormItem>
                             <FormLabel>Manufacturer</FormLabel>
                             <FormControl>
-                              <Input placeholder="Manufacturer name" {...field} />
+                              <Input placeholder="Manufacturer name" {...field} value={field.value || ''} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -280,12 +289,12 @@ const ProductForm = ({
                     {shouldShowAttribute('unitCost') && (
                       <FormField
                         control={form.control}
-                        name="unitCost"
+                        name="price"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Unit Cost</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="Cost per unit" {...field} />
+                              <Input type="number" step="0.01" placeholder="Cost per unit" {...field} value={field.value ?? ''} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -298,12 +307,12 @@ const ProductForm = ({
                       {shouldShowAttribute('serialNumber') && (
                         <FormField
                           control={form.control}
-                          name="serialNumber"
+                          name="serial_number"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Serial Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="Serial number" {...field} />
+                                <Input placeholder="Serial number" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -315,12 +324,12 @@ const ProductForm = ({
                       {shouldShowAttribute('macAddress') && (
                         <FormField
                           control={form.control}
-                          name="macAddress"
+                          name="mac_address"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>MAC Address</FormLabel>
                               <FormControl>
-                                <Input placeholder="MAC address" {...field} />
+                                <Input placeholder="MAC address" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -334,12 +343,12 @@ const ProductForm = ({
                       {shouldShowAttribute('warrantyInfo') && (
                         <FormField
                           control={form.control}
-                          name="warrantyInfo"
+                          name="warranty_info"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Warranty Information</FormLabel>
                               <FormControl>
-                                <Input placeholder="Warranty details" {...field} />
+                                <Input placeholder="Warranty details" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -351,12 +360,12 @@ const ProductForm = ({
                       {shouldShowAttribute('firmwareVersion') && (
                         <FormField
                           control={form.control}
-                          name="firmwareVersion"
+                          name="firmware_version"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Firmware Version</FormLabel>
                               <FormControl>
-                                <Input placeholder="Current firmware version" {...field} />
+                                <Input placeholder="Current firmware version" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -369,12 +378,12 @@ const ProductForm = ({
                     {shouldShowAttribute('licenseKeys') && (
                       <FormField
                         control={form.control}
-                        name="licenseKeys"
+                        name="license_keys"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>License Keys</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="Software license keys" {...field} />
+                              <Textarea placeholder="Software license keys" {...field} value={field.value || ''} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -387,12 +396,12 @@ const ProductForm = ({
                       {shouldShowAttribute('compatibilityInfo') && (
                         <FormField
                           control={form.control}
-                          name="compatibilityInfo"
+                          name="compatibility_info"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Compatibility Information</FormLabel>
                               <FormControl>
-                                <Input placeholder="Compatible systems/devices" {...field} />
+                                <Input placeholder="Compatible systems/devices" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -404,12 +413,12 @@ const ProductForm = ({
                       {shouldShowAttribute('networkSpecs') && (
                         <FormField
                           control={form.control}
-                          name="networkSpecs"
+                          name="network_specs"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Network Specifications</FormLabel>
                               <FormControl>
-                                <Input placeholder="Network requirements" {...field} />
+                                <Input placeholder="Network requirements" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -423,12 +432,12 @@ const ProductForm = ({
                       {shouldShowAttribute('powerConsumption') && (
                         <FormField
                           control={form.control}
-                          name="powerConsumption"
+                          name="power_consumption"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Power Consumption</FormLabel>
                               <FormControl>
-                                <Input placeholder="Power requirements" {...field} />
+                                <Input placeholder="Power requirements" {...field} value={field.value || ''} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -440,7 +449,7 @@ const ProductForm = ({
                       {shouldShowAttribute('lifecycleStatus') && (
                         <FormField
                           control={form.control}
-                          name="lifecycleStatus"
+                          name="lifecycle_status"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Lifecycle Status</FormLabel>
@@ -448,6 +457,7 @@ const ProductForm = ({
                                 <select 
                                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                   {...field}
+                                  value={field.value || ''}
                                 >
                                   <option value="">Select status</option>
                                   <option value="New">New</option>

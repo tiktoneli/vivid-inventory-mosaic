@@ -61,6 +61,7 @@ export const useProducts = () => {
   };
 
   const createProduct = async (product: ProductInput): Promise<Product> => {
+    // Make sure we've got the correct location ID
     const { data, error } = await supabase
       .from('products')
       .insert([{ 
@@ -71,6 +72,7 @@ export const useProducts = () => {
       .single();
 
     if (error) {
+      console.error('Product creation error:', error);
       toast.error('Failed to create product', {
         description: error.message,
       });
