@@ -103,7 +103,7 @@ const Dashboard = () => {
             change="+12"
             status="increase"
             description="from last month"
-            icon={<Box className="h-5 w-5" />}
+            icon={<Box size={24} />}
           />
           <StatsCard
             title="Inventory Value"
@@ -111,7 +111,7 @@ const Dashboard = () => {
             change="+8.2%"
             status="increase"
             description="from last month"
-            icon={<DollarSign className="h-5 w-5" />}
+            icon={<DollarSign size={24} />}
           />
           <StatsCard
             title="Low Stock Items"
@@ -119,7 +119,7 @@ const Dashboard = () => {
             change="+3"
             status="decrease"
             description="from last week"
-            icon={<AlertCircle className="h-5 w-5" />}
+            icon={<AlertCircle size={24} />}
           />
           <StatsCard
             title="Total Users"
@@ -127,7 +127,7 @@ const Dashboard = () => {
             change="+2"
             status="increase"
             description="new this month"
-            icon={<Users className="h-5 w-5" />}
+            icon={<Users size={24} />}
           />
         </div>
       </section>

@@ -1,30 +1,27 @@
 
 import React from 'react';
-import { type LucideIcon } from 'lucide-react';
+import { type ReactNode } from 'react';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-  icon: LucideIcon;
+  change: string;
+  status: "increase" | "decrease" | "neutral";
   description?: string;
-  delay?: 1 | 2 | 3 | 4;
+  icon: ReactNode;
 }
 
 const StatsCard = ({ 
   title, 
   value, 
-  trend, 
-  icon: Icon, 
-  description,
-  delay = 1
+  change,
+  status,
+  icon,
+  description
 }: StatsCardProps) => {
   return (
     <div 
-      className={`relative overflow-hidden bg-card rounded-lg border border-border shadow-sm p-6 opacity-0 animate-slide-in-delayed-${delay}`}
+      className="relative overflow-hidden bg-card rounded-lg border border-border shadow-sm p-6"
     >
       <div className="flex justify-between items-start">
         <div>
@@ -35,15 +32,15 @@ const StatsCard = ({
             <p className="text-2xl font-semibold tracking-tight">
               {value}
             </p>
-            {trend && (
-              <span 
-                className={`ml-2 text-xs font-medium ${
-                  trend.isPositive ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {trend.isPositive ? '+' : ''}{trend.value}%
-              </span>
-            )}
+            <span 
+              className={`ml-2 text-xs font-medium ${
+                status === 'increase' ? 'text-green-600' : 
+                status === 'decrease' ? 'text-red-600' : 
+                'text-gray-600'
+              }`}
+            >
+              {change}
+            </span>
           </div>
           {description && (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -53,7 +50,7 @@ const StatsCard = ({
         </div>
         
         <div className="p-2 bg-secondary rounded-full">
-          <Icon className="h-5 w-5 text-foreground opacity-80" />
+          {icon}
         </div>
       </div>
       
