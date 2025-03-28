@@ -49,13 +49,15 @@ const StatsCard = ({
           )}
         </div>
         
-        <div className="p-2 bg-secondary rounded-full">
-          {icon}
+        <div className="p-2 bg-[#00859e]/10 rounded-full">
+          <div className="text-[#00859e]">
+            {icon}
+          </div>
         </div>
       </div>
       
       <div 
-        className="absolute -bottom-1/2 -right-1/2 w-32 h-32 rounded-full bg-primary opacity-5 blur-3xl" 
+        className="absolute -bottom-1/2 -right-1/2 w-32 h-32 rounded-full bg-[#00859e] opacity-5 blur-3xl" 
         aria-hidden="true"
       />
     </div>
