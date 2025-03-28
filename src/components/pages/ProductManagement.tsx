@@ -5,144 +5,23 @@ import ProductCard from '../ui/ProductCard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import ProductForm from '../ui/ProductForm';
-import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
+import { useLocations } from '@/hooks/useLocations';
+import { toast } from 'sonner';
 
 const ProductManagement = () => {
-  // Mock product data
-  const initialProducts = [
-    {
-      id: '1',
-      name: 'Premium Bluetooth Headphones',
-      category: '1', // Electronics
-      categoryName: 'Electronics',
-      sku: 'BT-HDPH-001',
-      location: 'Warehouse A',
-      stock: 45,
-      minStock: 10,
-      price: 129.99,
-      description: 'High-quality wireless headphones with noise cancellation',
-      dateCreated: '2023-04-15',
-      isActive: true,
-      manufacturer: 'Audio Tech',
-      serialNumber: 'AT-0012345',
-      warrantyInfo: '2 years limited warranty'
-    },
-    {
-      id: '2',
-      name: 'Ergonomic Office Chair',
-      category: '4', // Office Equipment
-      categoryName: 'Office Equipment',
-      sku: 'FRN-CHR-021',
-      location: 'Warehouse B',
-      stock: 12,
-      minStock: 15,
-      price: 249.99,
-      description: 'Adjustable office chair with lumbar support',
-      dateCreated: '2023-05-22',
-      isActive: true,
-      manufacturer: 'Office Pro',
-      warrantyInfo: '5 years warranty'
-    },
-    {
-      id: '3',
-      name: 'Ultra HD Smart TV 55"',
-      category: '1', // Electronics
-      categoryName: 'Electronics',
-      sku: 'TV-UHD-055',
-      location: 'Warehouse A',
-      stock: 8,
-      minStock: 10,
-      price: 899.99,
-      description: '4K smart television with HDR support',
-      dateCreated: '2023-06-10',
-      isActive: true,
-      manufacturer: 'Vision Electronics',
-      serialNumber: 'VE-78901234',
-      warrantyInfo: '1 year warranty'
-    },
-    {
-      id: '4',
-      name: 'Network Switch 24 Port',
-      category: '2', // Networking
-      categoryName: 'Networking',
-      sku: 'NET-SWT-024',
-      location: 'Warehouse C',
-      stock: 15,
-      minStock: 5,
-      price: 189.99,
-      description: '24-port gigabit managed switch',
-      dateCreated: '2023-07-15',
-      isActive: true,
-      manufacturer: 'NetGear',
-      macAddress: '00:1A:2B:3C:4D:5E',
-      serialNumber: 'NG-45678901',
-      networkSpecs: 'Gigabit Ethernet, PoE+'
-    },
-    {
-      id: '5',
-      name: 'CAD Software License',
-      category: '3', // Software
-      categoryName: 'Software',
-      sku: 'SW-CAD-001',
-      location: 'Server Room',
-      stock: 25,
-      minStock: 10,
-      price: 1299.99,
-      description: 'Professional CAD software for engineering',
-      dateCreated: '2023-08-05',
-      isActive: false,
-      licenseKeys: 'Multiple license keys stored in secure vault',
-      compatibilityInfo: 'Windows 10/11, macOS 12+',
-      lifecycleStatus: 'Current'
-    }
-  ];
-
-  // Mock categories with their optional attributes
-  const initialCategories = [
-    {
-      id: '1',
-      name: 'Electronics',
-      description: 'Electronic devices and equipment',
-      attributes: ['manufacturer', 'serialNumber', 'warrantyInfo', 'firmwareVersion'],
-      isActive: true
-    },
-    {
-      id: '2',
-      name: 'Networking',
-      description: 'Networking equipment and accessories',
-      attributes: ['manufacturer', 'macAddress', 'networkSpecs', 'licenseKeys'],
-      isActive: true
-    },
-    {
-      id: '3',
-      name: 'Software',
-      description: 'Software products and licenses',
-      attributes: ['licenseKeys', 'compatibilityInfo', 'lifecycleStatus'],
-      isActive: true
-    },
-    {
-      id: '4',
-      name: 'Office Equipment',
-      description: 'Office equipment and supplies',
-      attributes: ['manufacturer', 'warrantyInfo', 'powerConsumption'],
-      isActive: true
-    }
-  ];
-
-  // Mock locations
-  const locations = ['Warehouse A', 'Warehouse B', 'Warehouse C', 'Office Storage', 'Server Room', 'IT Department'];
-
-  const [products, setProducts] = useState(initialProducts);
-  const [categories] = useState(initialCategories);
+  const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { categories } = useCategories();
+  const { locations } = useLocations();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [showInactiveProducts, setShowInactiveProducts] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
-  
-  const { toast } = useToast();
 
   // Product actions handlers
   const handleEditProduct = (id: string) => {
@@ -160,57 +39,26 @@ const ProductManagement = () => {
   const confirmDelete = () => {
     if (!productToDelete) return;
     
-    const product = products.find(p => p.id === productToDelete);
-    if (!product) return;
-    
-    if (product.isActive) {
-      // Deactivate product (soft delete)
-      setProducts(products.map(p => 
-        p.id === productToDelete ? { ...p, isActive: false } : p
-      ));
-      toast({
-        title: "Product Deactivated",
-        description: `${product.name} has been deactivated and will be removed from active inventory.`,
-      });
-    } else {
-      // Hard delete after grace period (in real app this would be handled by backend)
-      setProducts(products.filter(p => p.id !== productToDelete));
-      toast({
-        title: "Product Deleted",
-        description: `${product.name} has been permanently removed from the database.`,
-        variant: "destructive"
-      });
-    }
-    
+    deleteProduct(productToDelete);
     setProductToDelete(null);
   };
 
   const handleFormSubmit = (values: any) => {
-    // Get category name based on category ID
-    const category = categories.find(c => c.id === values.category);
-    const categoryName = category ? category.name : '';
-    
     if (editingProduct) {
       // Update existing product
-      setProducts(products.map(p => 
-        p.id === editingProduct.id ? { 
-          ...p, 
+      updateProduct({
+        id: editingProduct.id,
+        data: {
           ...values,
-          categoryName,
-          price: values.unitCost || p.price
-        } : p
-      ));
+          price: values.unitCost || 0
+        }
+      });
     } else {
       // Add new product
-      const newProduct = {
-        id: `${Date.now()}`, // In a real app this would be generated by the backend
+      createProduct({
         ...values,
-        categoryName,
-        dateCreated: new Date().toISOString().split('T')[0],
-        price: values.unitCost || 0,
-        isActive: true
-      };
-      setProducts([newProduct, ...products]);
+        price: values.unitCost || 0
+      });
     }
     
     setIsFormOpen(false);
@@ -221,8 +69,8 @@ const ProductManagement = () => {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesStatus = showInactiveProducts ? true : product.isActive;
+    const matchesCategory = selectedCategory === 'All' || product.category_id === selectedCategory;
+    const matchesStatus = showInactiveProducts ? true : product.is_active;
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -246,6 +94,12 @@ const ProductManagement = () => {
               className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-10"
             >
               Manage Categories
+            </Link>
+            <Link
+              to="/locations"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-10"
+            >
+              Manage Locations
             </Link>
             <button 
               onClick={() => {
@@ -324,20 +178,24 @@ const ProductManagement = () => {
       </section>
 
       <section>
-        {filteredProducts.length > 0 ? (
+        {productsLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <p>Loading products...</p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
                 name={product.name}
-                category={product.categoryName}
+                category={product.categories?.name || "Uncategorized"}
                 sku={product.sku}
                 location={product.location}
-                stock={product.stock}
-                minStock={product.minStock}
-                description={product.description}
-                isActive={product.isActive}
+                stock={product.stock || 0}
+                minStock={product.min_stock}
+                description={product.description || ""}
+                isActive={product.is_active}
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
               />
@@ -369,8 +227,12 @@ const ProductManagement = () => {
             initialValues={editingProduct}
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormOpen(false)}
-            categories={categories}
-            locations={locations}
+            categories={categories.map(cat => ({ 
+              id: cat.id, 
+              name: cat.name, 
+              attributes: cat.attributes || [] 
+            }))}
+            locations={locations.map(loc => loc.name)}
             isEditing={!!editingProduct}
           />
         </DialogContent>
@@ -381,12 +243,12 @@ const ProductManagement = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[#445372]">
-              {products.find(p => p.id === productToDelete)?.isActive 
+              {products.find(p => p.id === productToDelete)?.is_active 
                 ? 'Deactivate Product' 
                 : 'Permanently Delete Product'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {products.find(p => p.id === productToDelete)?.isActive 
+              {products.find(p => p.id === productToDelete)?.is_active 
                 ? 'This will deactivate the product. It will remain in the database but won\'t appear in active inventory.' 
                 : 'This will permanently remove the product from the database. This action cannot be undone.'}
             </AlertDialogDescription>
@@ -395,11 +257,11 @@ const ProductManagement = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
-              className={products.find(p => p.id === productToDelete)?.isActive 
+              className={products.find(p => p.id === productToDelete)?.is_active 
                 ? 'bg-orange-500 hover:bg-orange-600' 
                 : 'bg-red-500 hover:bg-red-600'}
             >
-              {products.find(p => p.id === productToDelete)?.isActive 
+              {products.find(p => p.id === productToDelete)?.is_active 
                 ? 'Deactivate' 
                 : 'Delete'}
             </AlertDialogAction>

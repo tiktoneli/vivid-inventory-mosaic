@@ -1,68 +1,64 @@
+import React from 'react';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+import './index.css';
+import Layout from './components/layout/Layout';
+import Index from './components/pages/Index';
+import Dashboard from './components/pages/Dashboard';
+import ProductManagement from './components/pages/ProductManagement';
+import CategoryManagement from './components/pages/CategoryManagement';
+import NotFound from './components/pages/NotFound';
+import InventoryControl from './components/pages/InventoryControl';
+import LocationManagement from './components/pages/LocationManagement';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+// Update the routes to include location management
+const routes = [
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <Index />
+      },
+      {
+        path: '/dashboard',
+        element: <Dashboard />
+      },
+      {
+        path: '/products',
+        element: <ProductManagement />
+      },
+      {
+        path: '/categories',
+        element: <CategoryManagement />
+      },
+      {
+        path: '/locations',
+        element: <LocationManagement />
+      },
+      {
+        path: '/inventory',
+        element: <InventoryControl />
+      },
+      {
+        path: '*',
+        element: <NotFound />
+      }
+    ],
+  },
+];
 
-// Import pages components
-import ProductManagement from "./components/pages/ProductManagement";
-import InventoryControl from "./components/pages/InventoryControl";
-import CategoryManagement from "./components/pages/CategoryManagement";
-import Dashboard from "./components/pages/Dashboard";
+const router = createBrowserRouter(routes);
 
-// Create a wrapper component to add layout to pages
-import Navbar from "./components/layout/Navbar";
-import Footer from "./components/layout/Footer";
-
-const PageWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-col min-h-screen">
-    <Navbar />
-    <main className="flex-grow pt-20">
-      {children}
-    </main>
-    <Footer />
-  </div>
-);
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={
-            <PageWrapper>
-              <Dashboard />
-            </PageWrapper>
-          } />
-          <Route path="/products" element={
-            <PageWrapper>
-              <ProductManagement />
-            </PageWrapper>
-          } />
-          <Route path="/categories" element={
-            <PageWrapper>
-              <CategoryManagement />
-            </PageWrapper>
-          } />
-          <Route path="/inventory" element={
-            <PageWrapper>
-              <InventoryControl />
-            </PageWrapper>
-          } />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
+  );
+}
 
 export default App;
