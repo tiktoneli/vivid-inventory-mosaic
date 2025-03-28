@@ -10,7 +10,7 @@ export type InventoryMovement = {
   product_id: string;
   quantity: number;
   location: string;
-  user: string | null;
+  username: string | null;
   notes: string | null;
   created_at: string;
 };

@@ -9,13 +9,199 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          attributes: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          attributes?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          attributes?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          id: string
+          location: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          reference: string
+          type: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          reference: string
+          type: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          reference?: string
+          type?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category_id: string
+          compatibility_info: string | null
+          created_at: string
+          description: string | null
+          firmware_version: string | null
+          id: string
+          is_active: boolean | null
+          license_keys: string | null
+          lifecycle_status: string | null
+          location: string
+          mac_address: string | null
+          manufacturer: string | null
+          min_stock: number
+          name: string
+          network_specs: string | null
+          power_consumption: string | null
+          price: number | null
+          serial_number: string | null
+          sku: string
+          stock: number | null
+          updated_at: string | null
+          warranty_info: string | null
+        }
+        Insert: {
+          category_id: string
+          compatibility_info?: string | null
+          created_at?: string
+          description?: string | null
+          firmware_version?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_keys?: string | null
+          lifecycle_status?: string | null
+          location: string
+          mac_address?: string | null
+          manufacturer?: string | null
+          min_stock?: number
+          name: string
+          network_specs?: string | null
+          power_consumption?: string | null
+          price?: number | null
+          serial_number?: string | null
+          sku: string
+          stock?: number | null
+          updated_at?: string | null
+          warranty_info?: string | null
+        }
+        Update: {
+          category_id?: string
+          compatibility_info?: string | null
+          created_at?: string
+          description?: string | null
+          firmware_version?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_keys?: string | null
+          lifecycle_status?: string | null
+          location?: string
+          mac_address?: string | null
+          manufacturer?: string | null
+          min_stock?: number
+          name?: string
+          network_specs?: string | null
+          power_consumption?: string | null
+          price?: number | null
+          serial_number?: string | null
+          sku?: string
+          stock?: number | null
+          updated_at?: string | null
+          warranty_info?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_product_stock: {
+        Args: {
+          p_product_id: string
+          p_quantity: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
