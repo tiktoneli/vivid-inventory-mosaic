@@ -46,42 +46,43 @@
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Softer dark mode with blue-blackish tones */
+    --background: 215 28% 17%;
+    --foreground: 210 20% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 217 33% 20%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 217 33% 20%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 215 28% 17%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 215 25% 27%;
+    --muted-foreground: 217 10% 70%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 215 25% 27%;
+    --accent-foreground: 210 20% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 40.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 217 20% 32%;
+    --input: 215 25% 27%;
+    --ring: 210 20% 75%;
 
-    --sidebar-background: 240 10% 3.9%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 240 5.9% 10%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 240 4.9% 83.9%;
+    --sidebar-background: 215 28% 17%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 210 20% 98%;
+    --sidebar-primary-foreground: 215 28% 17%;
+    --sidebar-accent: 215 25% 27%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 217 20% 32%;
+    --sidebar-ring: 210 20% 75%;
   }
 }
 
@@ -111,7 +112,7 @@
   }
 
   .glass-morphism {
-    @apply backdrop-blur-xl bg-white/80 dark:bg-black/30 border border-white/20 shadow-sm;
+    @apply backdrop-blur-xl bg-white/80 dark:bg-[#1A2030]/80 border border-white/20 shadow-sm;
   }
   
   .text-balance {

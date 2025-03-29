@@ -19,7 +19,7 @@ export function ThemeToggle() {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-full"
+            className="rounded-full bg-transparent dark:text-white dark:hover:bg-white/10"
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

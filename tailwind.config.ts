@@ -63,10 +63,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Add custom brand colors for accessibility
+				// Custom brand colors from palette
 				brand: {
 					primary: '#00859e',
 					secondary: '#445372',
+					dark: '#1A2030', // Added a dark blue-blackish color
 					light: '#ffffff',
 				}
 			},
