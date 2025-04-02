@@ -42,7 +42,7 @@ export type ProductItem = {
   serial_number: string;
   sku: string;
   location_id: string;
-  status: string;
+  status: "available" | "in_use" | "maintenance" | "retired";
   notes: string | null;
   created_at: string;
   updated_at: string | null;
@@ -180,6 +180,34 @@ export const useProducts = () => {
     return data;
   };
 
+  const createProductItems = async (
+    productId: string,
+    locationId: string,
+    quantity: number,
+    basePrefix: string = ''
+  ): Promise<number> {
+    let successCount = 0;
+    
+    for (let i = 0; i < quantity; i++) {
+      try {
+        // Create basic product item with auto-generated serial numbers
+        await createProductItem({
+          product_id: productId,
+          sku: "", // Empty SKU to be filled later
+          serial_number: basePrefix ? `${basePrefix}-${i+1}` : `ITEM-${Date.now()}-${i+1}`,
+          location_id: locationId,
+          status: "available",
+          notes: "Auto-generated batch item"
+        });
+        successCount++;
+      } catch (error) {
+        console.error("Error creating item", error);
+      }
+    }
+    
+    return successCount;
+  };
+
   const getProductInventory = async (productId: string): Promise<ProductInventory[]> => {
     const { data, error } = await supabase
       .from('product_inventory')
@@ -222,7 +250,7 @@ export const useProducts = () => {
     mutationFn: createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product created successfully');
+      toast.success('Product batch created successfully');
     },
   });
 
@@ -231,7 +259,7 @@ export const useProducts = () => {
       updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product updated successfully');
+      toast.success('Product batch updated successfully');
     },
   });
 
@@ -239,7 +267,7 @@ export const useProducts = () => {
     mutationFn: deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Product deleted successfully');
+      toast.success('Product batch deleted successfully');
     },
   });
 
@@ -252,6 +280,20 @@ export const useProducts = () => {
     },
   });
 
+  const createProductItemsMutation = useMutation({
+    mutationFn: ({ productId, locationId, quantity, basePrefix }: { 
+      productId: string; 
+      locationId: string; 
+      quantity: number; 
+      basePrefix?: string 
+    }) => createProductItems(productId, locationId, quantity, basePrefix),
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['productItems'] });
+      toast.success(`Successfully created ${count} product items`);
+    },
+  });
+
   return {
     products: productsQuery.data || [],
     isLoading: productsQuery.isLoading,
@@ -261,6 +303,7 @@ export const useProducts = () => {
     updateProduct: updateProductMutation.mutate,
     deleteProduct: deleteProductMutation.mutate,
     createProductItem: createProductItemMutation.mutate,
+    createProductItems: createProductItemsMutation.mutate,
     getProductInventory,
     getProductItems,
   };

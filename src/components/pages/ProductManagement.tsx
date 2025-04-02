@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
+import { useProductItems } from '@/hooks/useProductItems';
 import { toast } from 'sonner';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +18,7 @@ import BatchProductForm from '../ui/BatchProductForm';
 
 const ProductManagement = () => {
   const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { createProductItem } = useProductItems();
   const { categories } = useCategories();
   const { locations } = useLocations();
   
@@ -69,14 +71,48 @@ const ProductManagement = () => {
     setEditingProduct(null);
   };
 
-  const handleBatchFormSubmit = (products: any[]) => {
-    // Process each product in the batch
-    products.forEach(product => {
-      createProduct(product);
-    });
+  const handleBatchFormSubmit = (products: any[], quickAdd?: { enabled: boolean; quantity: number }) => {
+    let createdCount = 0;
     
+    // Process each product in the batch (which are now batches themselves)
+    const processProducts = async () => {
+      for (const productData of products) {
+        try {
+          // Create the product batch
+          const product = await createProduct({
+            ...productData,
+            sku: productData.batch_code, // Map batch_code to sku field in the database
+          });
+          createdCount++;
+          
+          // If quick add is enabled, create the specified number of product items
+          if (quickAdd?.enabled && quickAdd.quantity > 0) {
+            for (let i = 0; i < quickAdd.quantity; i++) {
+              await createProductItem({
+                product_id: product.id,
+                sku: "", // Leave blank for later editing
+                serial_number: `${product.name}-${i+1}`, // Generate a temporary serial number
+                location_id: product.location,
+                status: "available",
+                notes: `Auto-created as part of batch ${productData.batch_code}`
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error creating product batch:", error);
+        }
+      }
+      
+      if (createdCount > 0) {
+        toast.success(`Successfully added ${createdCount} product batch${createdCount > 1 ? 'es' : ''} to inventory`);
+        if (quickAdd?.enabled) {
+          toast.success(`Added ${quickAdd.quantity * createdCount} items to inventory`);
+        }
+      }
+    };
+    
+    processProducts();
     setIsBatchFormOpen(false);
-    toast.success(`Successfully added ${products.length} products to inventory`);
   };
 
   // Filter products based on search term, category, and location
@@ -166,8 +202,8 @@ const ProductManagement = () => {
       <section className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight mb-1 text-[#445372]">Products</h1>
-            <p className="text-muted-foreground">Manage your product catalog</p>
+            <h1 className="text-3xl font-semibold tracking-tight mb-1 text-[#445372]">Product Batches</h1>
+            <p className="text-muted-foreground">Manage your product batches</p>
           </div>
           <div className="flex flex-col md:flex-row gap-2">
             <Link
@@ -190,14 +226,14 @@ const ProductManagement = () => {
                 }}
                 className="bg-[#00859e] text-white hover:bg-[#00859e]/90"
               >
-                <Plus className="mr-2 h-4 w-4" /> Add Product
+                <Plus className="mr-2 h-4 w-4" /> Add New Batch
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setIsBatchFormOpen(true)}
                 className="border-[#00859e] text-[#00859e] hover:bg-[#00859e]/10"
               >
-                <Upload className="mr-2 h-4 w-4" /> Batch Add
+                <Upload className="mr-2 h-4 w-4" /> Add Multiple Batches
               </Button>
             </div>
           </div>
@@ -210,7 +246,7 @@ const ProductManagement = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <input
               type="text"
-              placeholder="Search products by name or SKU..."
+              placeholder="Search batches by name or code..."
               className="pl-10 w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -261,7 +297,7 @@ const ProductManagement = () => {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium text-foreground">{currentProducts.length}</span> of {filteredProducts.length} products
+              Showing <span className="font-medium text-foreground">{currentProducts.length}</span> of {filteredProducts.length} product batches
             </p>
             <label className="flex items-center gap-1 text-sm">
               <input 
@@ -288,7 +324,7 @@ const ProductManagement = () => {
       <section>
         {productsLoading ? (
           <div className="flex justify-center items-center py-12">
-            <p>Loading products...</p>
+            <p>Loading product batches...</p>
           </div>
         ) : currentProducts.length > 0 ? (
           <>
@@ -343,9 +379,9 @@ const ProductManagement = () => {
             <div className="p-3 bg-secondary rounded-full mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-1">No products found</h3>
+            <h3 className="text-lg font-medium mb-1">No product batches found</h3>
             <p className="text-muted-foreground text-sm max-w-md">
-              We couldn't find any products matching your search criteria. Try adjusting your filters or search term.
+              We couldn't find any product batches matching your search criteria. Try adjusting your filters or search term.
             </p>
           </div>
         )}
@@ -355,9 +391,9 @@ const ProductManagement = () => {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
-            <DialogTitle className="text-[#445372]">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+            <DialogTitle className="text-[#445372]">{editingProduct ? 'Edit Batch' : 'Add New Batch'}</DialogTitle>
             <DialogDescription>
-              {editingProduct ? 'Update the product information below.' : 'Fill out the form below to add a new product to inventory.'}
+              {editingProduct ? 'Update the batch information below.' : 'Fill out the form below to add a new product batch to inventory.'}
             </DialogDescription>
           </DialogHeader>
           <ProductForm 
@@ -379,9 +415,9 @@ const ProductManagement = () => {
       <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
         <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
-            <DialogTitle className="text-[#445372]">Add Multiple Products</DialogTitle>
+            <DialogTitle className="text-[#445372]">Add Multiple Batches</DialogTitle>
             <DialogDescription>
-              Quickly add multiple products to inventory at once. You can fill in more details later.
+              Quickly add multiple product batches to inventory at once. You can fill in more details later.
             </DialogDescription>
           </DialogHeader>
           <BatchProductForm 
@@ -399,13 +435,13 @@ const ProductManagement = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[#445372]">
               {products.find(p => p.id === productToDelete)?.is_active 
-                ? 'Deactivate Product' 
-                : 'Permanently Delete Product'}
+                ? 'Deactivate Batch' 
+                : 'Permanently Delete Batch'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {products.find(p => p.id === productToDelete)?.is_active 
-                ? 'This will deactivate the product. It will remain in the database but won\'t appear in active inventory.' 
-                : 'This will permanently remove the product from the database. This action cannot be undone.'}
+                ? 'This will deactivate the batch. It will remain in the database but won\'t appear in active inventory.' 
+                : 'This will permanently remove the batch from the database. This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
