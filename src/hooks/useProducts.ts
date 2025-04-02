@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -180,12 +179,13 @@ export const useProducts = () => {
     return data;
   };
 
+  // Fixed function with arrow function syntax
   const createProductItems = async (
     productId: string,
     locationId: string,
     quantity: number,
     basePrefix: string = ''
-  ): Promise<number> {
+  ) => {  // Changed to arrow function syntax
     let successCount = 0;
     
     for (let i = 0; i < quantity; i++) {
