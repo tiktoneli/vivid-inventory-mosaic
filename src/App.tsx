@@ -1,15 +1,15 @@
+
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { Layout } from "./components/layout/Layout";
-import { Index } from "./components/pages/Index";
-import { Dashboard } from "./components/pages/Dashboard";
-import { NotFound } from "./components/pages/NotFound";
-import { CategoryManagement } from "./components/pages/CategoryManagement";
-import { LocationManagement } from "./components/pages/LocationManagement";
-import { InventoryControl } from "./components/pages/InventoryControl";
+import Layout from "./components/layout/Layout";
+import Index from "./components/pages/Index";
+import Dashboard from "./components/pages/Dashboard";
+import NotFound from "./components/pages/NotFound";
+import CategoryManagement from "./components/pages/CategoryManagement";
+import LocationManagement from "./components/pages/LocationManagement";
+import InventoryControl from "./components/pages/InventoryControl";
 import { Toaster } from "@/components/ui/toaster"
 import ProductManagement from "./components/pages/ProductManagement";
-// Add the import for ProductItemsPage
 import ProductItemsPage from "./components/pages/ProductItemsPage";
 
 function App() {
