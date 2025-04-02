@@ -10,6 +10,10 @@ import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import BatchProductForm from '../ui/BatchProductForm';
 
 const ProductManagement = () => {
   const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct } = useProducts();
@@ -18,10 +22,16 @@ const ProductManagement = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedLocation, setSelectedLocation] = useState('All');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBatchFormOpen, setIsBatchFormOpen] = useState(false);
   const [showInactiveProducts, setShowInactiveProducts] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8;
 
   // Product actions handlers
   const handleEditProduct = (id: string) => {
@@ -59,20 +69,97 @@ const ProductManagement = () => {
     setEditingProduct(null);
   };
 
-  // Filter products based on search term and category
+  const handleBatchFormSubmit = (products: any[]) => {
+    // Process each product in the batch
+    products.forEach(product => {
+      createProduct(product);
+    });
+    
+    setIsBatchFormOpen(false);
+    toast.success(`Successfully added ${products.length} products to inventory`);
+  };
+
+  // Filter products based on search term, category, and location
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           product.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || product.category_id === selectedCategory;
+    const matchesLocation = selectedLocation === 'All' || product.location === selectedLocation;
     const matchesStatus = showInactiveProducts ? true : product.is_active;
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesCategory && matchesLocation && matchesStatus;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+
+  // Page change handler
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   // Get unique categories for filter
   const categoryOptions = [
     { id: 'All', name: 'All Categories' },
     ...categories.map(cat => ({ id: cat.id, name: cat.name }))
   ];
+
+  // Get unique locations for filter
+  const locationOptions = [
+    { id: 'All', name: 'All Locations' },
+    ...locations.map(loc => ({ id: loc.id, name: loc.name }))
+  ];
+
+  // Generate pagination items
+  const renderPaginationItems = () => {
+    const items = [];
+    
+    // Show first page
+    if (currentPage > 3) {
+      items.push(
+        <PaginationItem key="first">
+          <PaginationLink onClick={() => handlePageChange(1)}>1</PaginationLink>
+        </PaginationItem>
+      );
+      
+      if (currentPage > 4) {
+        items.push(<PaginationItem key="ellipsis1"><span className="px-4">...</span></PaginationItem>);
+      }
+    }
+    
+    // Show pages around current page
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink 
+            isActive={currentPage === i} 
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Show last page
+    if (currentPage < totalPages - 2) {
+      if (currentPage < totalPages - 3) {
+        items.push(<PaginationItem key="ellipsis2"><span className="px-4">...</span></PaginationItem>);
+      }
+      
+      items.push(
+        <PaginationItem key="last">
+          <PaginationLink onClick={() => handlePageChange(totalPages)}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return items;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -95,15 +182,24 @@ const ProductManagement = () => {
             >
               Manage Locations
             </Link>
-            <button 
-              onClick={() => {
-                setEditingProduct(null);
-                setIsFormOpen(true);
-              }}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-[#00859e] text-white shadow hover:bg-[#00859e]/90 px-4 py-2 h-10"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Product
-            </button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => {
+                  setEditingProduct(null);
+                  setIsFormOpen(true);
+                }}
+                className="bg-[#00859e] text-white hover:bg-[#00859e]/90"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Product
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsBatchFormOpen(true)}
+                className="border-[#00859e] text-[#00859e] hover:bg-[#00859e]/10"
+              >
+                <Upload className="mr-2 h-4 w-4" /> Batch Add
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -122,15 +218,33 @@ const ProductManagement = () => {
           </div>
           
           <div className="flex gap-2">
-            <select
-              className="h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            <Select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onValueChange={setSelectedCategory}
             >
-              {categoryOptions.map(category => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map(category => (
+                  <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select
+              value={selectedLocation}
+              onValueChange={setSelectedLocation}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locationOptions.map(location => (
+                  <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             
             <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10">
               <Filter className="h-4 w-4" />
@@ -147,7 +261,7 @@ const ProductManagement = () => {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> of {products.length} products
+              Showing <span className="font-medium text-foreground">{currentProducts.length}</span> of {filteredProducts.length} products
             </p>
             <label className="flex items-center gap-1 text-sm">
               <input 
@@ -176,29 +290,54 @@ const ProductManagement = () => {
           <div className="flex justify-center items-center py-12">
             <p>Loading products...</p>
           </div>
-        ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => {
-              const locationName = locations.find(loc => loc.id === product.location)?.name || "Unknown";
-              
-              return (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  category={product.categories?.name || "Uncategorized"}
-                  sku={product.sku}
-                  location={locationName}
-                  stock={product.stock || 0}
-                  minStock={product.min_stock}
-                  description={product.description || ""}
-                  isActive={product.is_active}
-                  onEdit={handleEditProduct}
-                  onDelete={handleDeleteProduct}
-                />
-              );
-            })}
-          </div>
+        ) : currentProducts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {currentProducts.map((product) => {
+                const locationName = locations.find(loc => loc.id === product.location)?.name || "Unknown";
+                
+                return (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    category={product.categories?.name || "Uncategorized"}
+                    sku={product.sku}
+                    location={locationName}
+                    stock={product.stock || 0}
+                    minStock={product.min_stock}
+                    description={product.description || ""}
+                    isActive={product.is_active}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteProduct}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination>
+                  <PaginationContent>
+                    {currentPage > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
+                      </PaginationItem>
+                    )}
+                    
+                    {renderPaginationItems()}
+                    
+                    {currentPage < totalPages && (
+                      <PaginationItem>
+                        <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
+                      </PaginationItem>
+                    )}
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="p-3 bg-secondary rounded-full mb-4">
@@ -232,6 +371,24 @@ const ProductManagement = () => {
             }))}
             locations={locations}
             isEditing={!!editingProduct}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch Product Form Dialog */}
+      <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
+        <DialogContent className="sm:max-w-[900px]">
+          <DialogHeader>
+            <DialogTitle className="text-[#445372]">Add Multiple Products</DialogTitle>
+            <DialogDescription>
+              Quickly add multiple products to inventory at once. You can fill in more details later.
+            </DialogDescription>
+          </DialogHeader>
+          <BatchProductForm 
+            onSubmit={handleBatchFormSubmit}
+            onCancel={() => setIsBatchFormOpen(false)}
+            categories={categories}
+            locations={locations}
           />
         </DialogContent>
       </Dialog>
