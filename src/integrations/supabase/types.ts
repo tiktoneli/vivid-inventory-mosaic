@@ -78,6 +78,13 @@ export type Database = {
             foreignKeyName: "inventory_movements_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "product_inventory"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
@@ -107,6 +114,71 @@ export type Database = {
         }
         Relationships: []
       }
+      product_items: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          notes: string | null
+          product_id: string
+          serial_number: string
+          sku: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          notes?: string | null
+          product_id: string
+          serial_number: string
+          sku: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+          product_id?: string
+          serial_number?: string
+          sku?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "product_inventory"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "product_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_inventory"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string
@@ -128,7 +200,6 @@ export type Database = {
           price: number | null
           serial_number: string | null
           sku: string
-          stock: number | null
           updated_at: string | null
           warranty_info: string | null
         }
@@ -152,7 +223,6 @@ export type Database = {
           price?: number | null
           serial_number?: string | null
           sku: string
-          stock?: number | null
           updated_at?: string | null
           warranty_info?: string | null
         }
@@ -176,7 +246,6 @@ export type Database = {
           price?: number | null
           serial_number?: string | null
           sku?: string
-          stock?: number | null
           updated_at?: string | null
           warranty_info?: string | null
         }
@@ -195,13 +264,51 @@ export type Database = {
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "products_location_fkey"
+            columns: ["location"]
+            isOneToOne: false
+            referencedRelation: "product_inventory"
+            referencedColumns: ["location_id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      product_inventory: {
+        Row: {
+          category_id: string | null
+          location_id: string | null
+          location_name: string | null
+          product_id: string | null
+          product_name: string | null
+          quantity: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_product_stock_by_location: {
+        Args: {
+          p_product_id: string
+          p_location_id: string
+        }
+        Returns: number
+      }
+      get_product_total_stock: {
+        Args: {
+          p_product_id: string
+        }
+        Returns: number
+      }
       update_product_stock: {
         Args: {
           p_product_id: string

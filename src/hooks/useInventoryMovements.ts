@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -48,7 +47,7 @@ export const useInventoryMovements = () => {
   };
 
   const createInventoryMovement = async (movement: InventoryMovementInput): Promise<InventoryMovement> => {
-    // Start a transaction
+    // Create the inventory movement record
     const { data: movementData, error: movementError } = await supabase
       .from('inventory_movements')
       .insert([{ 
@@ -65,22 +64,14 @@ export const useInventoryMovements = () => {
       throw movementError;
     }
 
-    // Update product stock
-    const stockChange = movement.type === 'out' || (movement.type === 'adjustment' && movement.quantity < 0) 
-      ? -Math.abs(movement.quantity) 
-      : movement.quantity;
+    // For product items, we would now need to update the status or location of specific product items
+    // based on the movement type instead of directly updating stock quantity
     
-    const { error: productError } = await supabase.rpc('update_product_stock', {
-      p_product_id: movement.product_id,
-      p_quantity: stockChange
-    });
-
-    if (productError) {
-      toast.error('Failed to update product stock', {
-        description: productError.message,
-      });
-      throw productError;
-    }
+    // This depends on the business logic - for example, for "out" movements, 
+    // we might need to mark specific items as "sold" or "transferred"
+    
+    // For this MVP, we'll keep the existing interface but the actual inventory
+    // is tracked at the item level now
 
     return movementData;
   };

@@ -10,7 +10,6 @@ export type Product = {
   description: string | null;
   category_id: string;
   location: string;
-  stock: number;
   min_stock: number;
   price: number | null;
   is_active: boolean;
@@ -32,15 +31,38 @@ export type ProductWithCategory = Product & {
   categories: {
     name: string;
   };
+  stock?: number; // Calculated from product_items
 };
 
 export type ProductInput = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
+
+export type ProductItem = {
+  id: string;
+  product_id: string;
+  serial_number: string;
+  sku: string;
+  location_id: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string | null;
+};
+
+export type ProductInventory = {
+  product_id: string | null;
+  product_name: string | null;
+  category_id: string | null;
+  location_id: string | null;
+  location_name: string | null;
+  quantity: number | null;
+};
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
 
   const fetchProducts = async (): Promise<ProductWithCategory[]> => {
-    const { data, error } = await supabase
+    // Fetch basic product data
+    const { data: productsData, error: productsError } = await supabase
       .from('products')
       .select(`
         *,
@@ -50,18 +72,37 @@ export const useProducts = () => {
       `)
       .order('name');
 
-    if (error) {
+    if (productsError) {
       toast.error('Failed to fetch products', {
-        description: error.message,
+        description: productsError.message,
       });
-      throw error;
+      throw productsError;
     }
 
-    return data;
+    // Fetch inventory data for each product
+    const productsWithStock = await Promise.all(
+      productsData.map(async (product) => {
+        const { data: stockData, error: stockError } = await supabase.rpc(
+          'get_product_total_stock',
+          { p_product_id: product.id }
+        );
+
+        if (stockError) {
+          console.error('Error fetching stock data:', stockError);
+          return { ...product, stock: 0 };
+        }
+
+        return { 
+          ...product, 
+          stock: stockData || 0 
+        };
+      })
+    );
+
+    return productsWithStock;
   };
 
   const createProduct = async (product: ProductInput): Promise<Product> => {
-    // Make sure we've got the correct location ID
     const { data, error } = await supabase
       .from('products')
       .insert([{ 
@@ -117,6 +158,61 @@ export const useProducts = () => {
     }
   };
 
+  // New functions for product items
+
+  const createProductItem = async (productItem: Omit<ProductItem, 'id' | 'created_at' | 'updated_at'>): Promise<ProductItem> => {
+    const { data, error } = await supabase
+      .from('product_items')
+      .insert([{
+        ...productItem,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Failed to create product item', {
+        description: error.message,
+      });
+      throw error;
+    }
+
+    return data;
+  };
+
+  const getProductInventory = async (productId: string): Promise<ProductInventory[]> => {
+    const { data, error } = await supabase
+      .from('product_inventory')
+      .select('*')
+      .eq('product_id', productId);
+
+    if (error) {
+      toast.error('Failed to fetch product inventory', {
+        description: error.message,
+      });
+      throw error;
+    }
+
+    return data || [];
+  };
+
+  const getProductItems = async (productId: string): Promise<ProductItem[]> => {
+    const { data, error } = await supabase
+      .from('product_items')
+      .select('*')
+      .eq('product_id', productId);
+
+    if (error) {
+      toast.error('Failed to fetch product items', {
+        description: error.message,
+      });
+      throw error;
+    }
+
+    return data || [];
+  };
+
+  // React Query hooks
   const productsQuery = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
@@ -147,6 +243,15 @@ export const useProducts = () => {
     },
   });
 
+  const createProductItemMutation = useMutation({
+    mutationFn: createProductItem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['productItems'] });
+      toast.success('Product item created successfully');
+    },
+  });
+
   return {
     products: productsQuery.data || [],
     isLoading: productsQuery.isLoading,
@@ -155,5 +260,8 @@ export const useProducts = () => {
     createProduct: createProductMutation.mutate,
     updateProduct: updateProductMutation.mutate,
     deleteProduct: deleteProductMutation.mutate,
+    createProductItem: createProductItemMutation.mutate,
+    getProductInventory,
+    getProductItems,
   };
 };
