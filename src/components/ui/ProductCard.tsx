@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Edit, Trash, AlertCircle } from 'lucide-react';
+import { Edit, Trash, AlertCircle, Package } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
   id: string;
@@ -54,8 +55,16 @@ const ProductCard = ({
                 <path d="M8 4C9.1 4 10 3.1 10 2C10 0.9 9.1 0 8 0C6.9 0 6 0.9 6 2C6 3.1 6.9 4 8 4ZM8 6C6.9 6 6 6.9 6 8C6 9.1 6.9 10 8 10C9.1 10 10 9.1 10 8C10 6.9 9.1 6 8 6ZM8 12C6.9 12 6 12.9 6 14C6 15.1 6.9 16 8 16C9.1 16 10 15.1 10 14C10 12.9 9.1 12 8 12Z" fill="currentColor"/>
               </svg>
             </button>
-            <div className="absolute right-0 mt-1 w-32 bg-card border border-border rounded-md shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+            <div className="absolute right-0 mt-1 w-40 bg-card border border-border rounded-md shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
               <div className="py-1">
+                <Link 
+                  to={`/products/${id}/items`}
+                  className="w-full flex items-center px-3 py-2 text-xs text-left hover:bg-secondary transition-colors"
+                  aria-label="View product items"
+                >
+                  <Package size={14} className="mr-2" />
+                  View Items
+                </Link>
                 <button 
                   onClick={() => onEdit?.(id)} 
                   className="w-full flex items-center px-3 py-2 text-xs text-left hover:bg-secondary transition-colors"

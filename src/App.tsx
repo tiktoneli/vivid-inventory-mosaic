@@ -1,64 +1,34 @@
-
-import React from 'react';
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
-import './index.css';
-import Layout from '@/components/layout/Layout';
-import Index from '@/components/pages/Index';
-import Dashboard from '@/components/pages/Dashboard';
-import ProductManagement from '@/components/pages/ProductManagement';
-import CategoryManagement from '@/components/pages/CategoryManagement';
-import NotFound from '@/components/pages/NotFound';
-import InventoryControl from '@/components/pages/InventoryControl';
-import LocationManagement from '@/components/pages/LocationManagement';
-
-// Update the routes to include location management
-const routes = [
-  {
-    path: '/',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: <Index />
-      },
-      {
-        path: '/dashboard',
-        element: <Dashboard />
-      },
-      {
-        path: '/products',
-        element: <ProductManagement />
-      },
-      {
-        path: '/categories',
-        element: <CategoryManagement />
-      },
-      {
-        path: '/locations',
-        element: <LocationManagement />
-      },
-      {
-        path: '/inventory',
-        element: <InventoryControl />
-      },
-      {
-        path: '*',
-        element: <NotFound />
-      }
-    ],
-  },
-];
-
-const router = createBrowserRouter(routes);
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Layout } from "./components/layout/Layout";
+import { Index } from "./components/pages/Index";
+import { Dashboard } from "./components/pages/Dashboard";
+import { NotFound } from "./components/pages/NotFound";
+import { CategoryManagement } from "./components/pages/CategoryManagement";
+import { LocationManagement } from "./components/pages/LocationManagement";
+import { InventoryControl } from "./components/pages/InventoryControl";
+import { Toaster } from "@/components/ui/toaster"
+import ProductManagement from "./components/pages/ProductManagement";
+// Add the import for ProductItemsPage
+import ProductItemsPage from "./components/pages/ProductItemsPage";
 
 function App() {
   return (
-    <React.StrictMode>
-      <RouterProvider router={router} />
-    </React.StrictMode>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Index />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="products" element={<ProductManagement />} />
+          <Route path="products/:productId/items" element={<ProductItemsPage />} />
+          <Route path="categories" element={<CategoryManagement />} />
+          <Route path="locations" element={<LocationManagement />} />
+          <Route path="inventory" element={<InventoryControl />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+      <Toaster />
+    </Router>
   );
 }
 
