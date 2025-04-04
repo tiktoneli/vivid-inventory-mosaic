@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProducts, useProductItems, type ProductItem } from '@/hooks/useProductItems';
+import { useProductItems } from '@/hooks/useProductItems';
+import { useProducts } from '@/hooks/useProducts';
 import { useLocations } from '@/hooks/useLocations';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
@@ -16,6 +17,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ProductItemForm from '../ui/ProductItemForm';
 import { toast } from 'sonner';
 import ProductItemSelectionForm from '../ui/ProductItemSelectionForm';
+
+// Define the ProductItem type
+export interface ProductItem {
+  id: string;
+  product_id: string;
+  sku: string;
+  serial_number: string;
+  location_id: string;
+  status: 'available' | 'in_use' | 'maintenance' | 'retired';
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -36,7 +50,7 @@ const ProductItemsPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   
-  const { getProductById, product, isLoading: productLoading } = useProducts(productId);
+  const { getProductById, product, isLoading: productLoading } = useProducts();
   const { 
     productItems, 
     isLoading: itemsLoading, 
@@ -352,7 +366,6 @@ const ProductItemsPage = () => {
                 : `Add a new item to the "${product.name}" batch.`}
             </DialogDescription>
           </DialogHeader>
-          {/* Note: ProductItemForm needs to be implemented separately */}
           <ProductItemForm 
             initialValues={editingItem || {
               product_id: productId,
@@ -385,10 +398,10 @@ const ProductItemsPage = () => {
             </DialogDescription>
           </DialogHeader>
           <ProductItemSelectionForm 
-            initialValues={{}}
             onSubmit={handleSelectionFormSubmit}
             onCancel={() => setIsSelectionFormOpen(false)}
             isEditing={false}
+            productId={productId}
           />
         </DialogContent>
       </Dialog>
