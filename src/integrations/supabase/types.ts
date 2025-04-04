@@ -181,6 +181,7 @@ export type Database = {
       }
       products: {
         Row: {
+          batch_code: string | null
           category_id: string
           compatibility_info: string | null
           created_at: string
@@ -204,6 +205,7 @@ export type Database = {
           warranty_info: string | null
         }
         Insert: {
+          batch_code?: string | null
           category_id: string
           compatibility_info?: string | null
           created_at?: string
@@ -227,6 +229,7 @@ export type Database = {
           warranty_info?: string | null
         }
         Update: {
+          batch_code?: string | null
           category_id?: string
           compatibility_info?: string | null
           created_at?: string

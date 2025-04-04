@@ -13,6 +13,7 @@ import { Location } from '@/hooks/useLocations';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Schema for batch product validation
 const batchProductSchema = z.object({
@@ -36,7 +37,7 @@ const batchProductSchema = z.object({
 type BatchProductFormValues = z.infer<typeof batchProductSchema>;
 
 interface BatchProductFormProps {
-  onSubmit: (values: any[], quickAdd?: { enabled: boolean; quantity: number }) => void;
+  onSubmit: (values: any[], quickAdd: { enabled: boolean; quantity: number }) => void;
   onCancel: () => void;
   categories: Category[];
   locations: Location[];
@@ -93,27 +94,27 @@ const BatchProductForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="max-h-[60vh] overflow-y-auto pr-2">
+        <ScrollArea className="max-h-[60vh] overflow-y-auto pr-2 -mr-2">
           <div className="space-y-6">
             {fields.map((field, index) => (
-              <div key={field.id} className="p-4 border rounded-md relative">
-                <div className="absolute top-3 right-3">
+              <div key={field.id} className="p-3 sm:p-4 border rounded-md relative">
+                <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
                   {fields.length > 1 && (
                     <Button 
                       type="button" 
                       variant="ghost" 
                       size="sm"
                       onClick={() => remove(index)}
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
                 
-                <h3 className="text-sm font-medium mb-4">Batch {index + 1}</h3>
+                <h3 className="text-sm font-medium mb-3 sm:mb-4">Batch {index + 1}</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <FormField
                     control={form.control}
                     name={`products.${index}.name`}
@@ -143,7 +144,7 @@ const BatchProductForm = ({
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
                   <FormField
                     control={form.control}
                     name={`products.${index}.category_id`}
@@ -177,7 +178,7 @@ const BatchProductForm = ({
                     name={`products.${index}.location`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Location *</FormLabel>
+                        <FormLabel>Default Storage Location *</FormLabel>
                         <Select 
                           value={field.value} 
                           onValueChange={field.onChange}
@@ -201,7 +202,7 @@ const BatchProductForm = ({
                   />
                 </div>
                 
-                <div className="mt-4">
+                <div className="mt-3 sm:mt-4">
                   <FormField
                     control={form.control}
                     name={`products.${index}.min_stock`}
@@ -225,7 +226,7 @@ const BatchProductForm = ({
                   />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-3 sm:mt-4">
                   <FormField
                     control={form.control}
                     name={`products.${index}.description`}
@@ -246,7 +247,7 @@ const BatchProductForm = ({
               </div>
             ))}
           </div>
-        </div>
+        </ScrollArea>
         
         <Button
           type="button"
@@ -260,9 +261,9 @@ const BatchProductForm = ({
         
         <Separator />
         
-        <div className="bg-muted/50 p-4 rounded-lg">
-          <h3 className="font-medium mb-3">Quick Item Addition</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
+          <h3 className="font-medium mb-2 sm:mb-3">Quick Item Addition</h3>
+          <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
             Enable this option to quickly add multiple items to a batch. Individual SKUs will be left blank for later editing.
           </p>
           
@@ -290,7 +291,7 @@ const BatchProductForm = ({
           </div>
           
           {form.watch("quickAdd.enabled") && (
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <FormField
                 control={form.control}
                 name="quickAdd.quantity"
@@ -317,7 +318,7 @@ const BatchProductForm = ({
           )}
         </div>
         
-        <div className="flex justify-end gap-2 pt-4">
+        <div className="flex justify-end gap-2 pt-3 sm:pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
@@ -15,6 +14,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import BatchProductForm from '../ui/BatchProductForm';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ProductManagement = () => {
   const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct } = useProducts();
@@ -71,7 +71,7 @@ const ProductManagement = () => {
     setEditingProduct(null);
   };
 
-  const handleBatchFormSubmit = (products: any[], quickAdd?: { enabled: boolean; quantity: number }) => {
+  const handleBatchFormSubmit = (products: any[], quickAdd: { enabled: boolean; quantity: number }) => {
     let createdCount = 0;
     
     // Process each product in the batch (which are now batches themselves)
@@ -86,7 +86,7 @@ const ProductManagement = () => {
           createdCount++;
           
           // If quick add is enabled, create the specified number of product items
-          if (quickAdd?.enabled && quickAdd.quantity > 0) {
+          if (quickAdd.enabled && quickAdd.quantity > 0) {
             for (let i = 0; i < quickAdd.quantity; i++) {
               await createProductItem({
                 product_id: product.id,
@@ -105,7 +105,7 @@ const ProductManagement = () => {
       
       if (createdCount > 0) {
         toast.success(`Successfully added ${createdCount} product batch${createdCount > 1 ? 'es' : ''} to inventory`);
-        if (quickAdd?.enabled) {
+        if (quickAdd.enabled) {
           toast.success(`Added ${quickAdd.quantity * createdCount} items to inventory`);
         }
       }
@@ -253,12 +253,12 @@ const ProductManagement = () => {
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
@@ -272,7 +272,7 @@ const ProductManagement = () => {
               value={selectedLocation}
               onValueChange={setSelectedLocation}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
               <SelectContent>
@@ -294,7 +294,7 @@ const ProductManagement = () => {
       </section>
 
       <section className="mb-4">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
           <div className="flex items-center gap-2">
             <p className="text-sm text-muted-foreground">
               Showing <span className="font-medium text-foreground">{currentProducts.length}</span> of {filteredProducts.length} product batches
@@ -387,33 +387,39 @@ const ProductManagement = () => {
         )}
       </section>
 
-      {/* Product Form Dialog */}
+      {/* Product Form Dialog - Made more responsive */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[900px]">
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] h-[90vh] sm:h-auto max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle className="text-[#445372]">{editingProduct ? 'Edit Batch' : 'Add New Batch'}</DialogTitle>
+            <DialogTitle className="text-[#445372]">
+              {editingProduct ? 'Edit Batch' : 'Add New Batch'}
+            </DialogTitle>
             <DialogDescription>
-              {editingProduct ? 'Update the batch information below.' : 'Fill out the form below to add a new product batch to inventory.'}
+              {editingProduct 
+                ? 'Update the batch information below.' 
+                : 'Fill out the form below to add a new product batch to inventory.'}
             </DialogDescription>
           </DialogHeader>
-          <ProductForm 
-            initialValues={editingProduct}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
-            categories={categories.map(cat => ({ 
-              id: cat.id, 
-              name: cat.name, 
-              attributes: cat.attributes || [] 
-            }))}
-            locations={locations}
-            isEditing={!!editingProduct}
-          />
+          <ScrollArea className="max-h-[calc(90vh-10rem)] pr-4 -mr-4">
+            <ProductForm 
+              initialValues={editingProduct}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsFormOpen(false)}
+              categories={categories.map(cat => ({ 
+                id: cat.id, 
+                name: cat.name, 
+                attributes: cat.attributes || [] 
+              }))}
+              locations={locations}
+              isEditing={!!editingProduct}
+            />
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
-      {/* Batch Product Form Dialog */}
+      {/* Batch Product Form Dialog - Made more responsive */}
       <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
-        <DialogContent className="sm:max-w-[900px]">
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] h-[90vh] sm:h-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="text-[#445372]">Add Multiple Batches</DialogTitle>
             <DialogDescription>
