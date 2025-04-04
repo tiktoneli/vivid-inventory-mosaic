@@ -1,301 +1,210 @@
 
-import React from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
-import { Category } from '@/hooks/useCategories';
-import { Location } from '@/hooks/useLocations';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-// Schema for batch product validation
-const batchProductSchema = z.object({
-  products: z.array(
-    z.object({
-      name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-      batch_code: z.string().min(3, { message: 'Batch code must be at least 3 characters.' }),
-      category_id: z.string().min(1, { message: 'Category is required.' }),
-      min_stock: z.coerce.number().min(0, { message: 'Minimum stock cannot be negative.' }).default(0),
-      is_active: z.boolean().default(true),
-      description: z.string().optional(),
-    })
-  ).min(1, { message: 'Add at least one batch.' }),
-  quickAdd: z.object({
-    enabled: z.boolean().default(false),
-    quantity: z.coerce.number().min(1, { message: 'Quantity must be at least 1.' }).default(1),
-  }),
-});
-
-type BatchProductFormValues = z.infer<typeof batchProductSchema>;
+import React, { useState } from 'react';
+import { Button } from './button';
+import { Input } from './input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { X, Plus, Check } from 'lucide-react';
+import { Textarea } from './textarea';
+import { Switch } from './switch';
+import { Label } from './label';
 
 interface BatchProductFormProps {
-  onSubmit: (values: any[], quickAdd: { enabled: boolean; quantity: number }) => void;
+  onSubmit: (products: any[], quickAdd: { enabled: boolean; quantity: number }) => void;
   onCancel: () => void;
-  categories: Category[];
-  locations: Location[];
+  categories: any[];
+  locations: any[];
 }
 
-const BatchProductForm = ({ 
-  onSubmit,
-  onCancel,
-  categories,
-}: BatchProductFormProps) => {
-  const form = useForm<BatchProductFormValues>({
-    resolver: zodResolver(batchProductSchema),
-    defaultValues: {
-      products: [
-        {
-          name: '',
-          batch_code: '',
-          category_id: '',
-          min_stock: 0,
-          is_active: true,
-          description: '',
-        }
-      ],
-      quickAdd: {
-        enabled: false,
-        quantity: 1
-      }
-    }
+const EmptyProductRow = {
+  name: '',
+  batch_code: '',
+  category_id: '',
+  description: '',
+  min_stock: 0,
+  price: null,
+};
+
+const BatchProductForm: React.FC<BatchProductFormProps> = ({ onSubmit, onCancel, categories, locations }) => {
+  const [products, setProducts] = useState([{ ...EmptyProductRow }]);
+  const [quickAdd, setQuickAdd] = useState<{ enabled: boolean; quantity: number }>({
+    enabled: false,
+    quantity: 1
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "products"
-  });
-
-  const handleSubmit = (values: BatchProductFormValues) => {
-    onSubmit(values.products, values.quickAdd);
+  const addRow = () => {
+    setProducts([...products, { ...EmptyProductRow }]);
   };
 
-  const addProduct = () => {
-    append({
-      name: '',
-      batch_code: '',
-      category_id: '',
-      min_stock: 0,
-      is_active: true,
-      description: '',
-    });
+  const removeRow = (index: number) => {
+    if (products.length > 1) {
+      setProducts(products.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateProduct = (index: number, field: string, value: any) => {
+    const updatedProducts = [...products];
+    updatedProducts[index] = {
+      ...updatedProducts[index],
+      [field]: value,
+    };
+    setProducts(updatedProducts);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const validProducts = products.filter(p => p.name.trim() !== '' && p.batch_code.trim() !== '' && p.category_id);
+    if (validProducts.length > 0) {
+      onSubmit(validProducts, quickAdd);
+    }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <ScrollArea className="max-h-[50vh] overflow-y-auto pr-2 -mr-2">
-          <div className="space-y-6">
-            {fields.map((field, index) => (
-              <div key={field.id} className="p-3 sm:p-4 border rounded-md relative">
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                  {fields.length > 1 && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => remove(index)}
-                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                
-                <h3 className="text-sm font-medium mb-3 sm:mb-4">Batch {index + 1}</h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <FormField
-                    control={form.control}
-                    name={`products.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Batch name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[500px] border-collapse">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-2 text-sm font-medium">Batch Name *</th>
+              <th className="text-left p-2 text-sm font-medium">Batch Code *</th>
+              <th className="text-left p-2 text-sm font-medium">Category *</th>
+              <th className="text-left p-2 text-sm font-medium">Description</th>
+              <th className="text-left p-2 text-sm font-medium">Min Stock</th>
+              <th className="text-center p-2 text-sm font-medium w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((product, index) => (
+              <tr key={index} className="border-b">
+                <td className="p-2">
+                  <Input
+                    placeholder="Enter batch name"
+                    value={product.name}
+                    onChange={e => updateProduct(index, 'name', e.target.value)}
+                    className="w-full"
+                    required
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name={`products.${index}.batch_code`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Batch Code * (Unique)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Batch code" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Enter code"
+                    value={product.batch_code}
+                    onChange={e => updateProduct(index, 'batch_code', e.target.value)}
+                    className="w-full"
+                    required
                   />
-                </div>
-                
-                <div className="mt-3 sm:mt-4">
-                  <FormField
-                    control={form.control}
-                    name={`products.${index}.category_id`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category *</FormLabel>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map(category => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                </td>
+                <td className="p-2">
+                  <Select
+                    value={product.category_id}
+                    onValueChange={value => updateProduct(index, 'category_id', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td className="p-2">
+                  <Textarea
+                    placeholder="Description"
+                    value={product.description || ''}
+                    onChange={e => updateProduct(index, 'description', e.target.value)}
+                    className="w-full h-10 min-h-10 resize-none"
                   />
-                </div>
-                
-                <div className="mt-3 sm:mt-4">
-                  <FormField
-                    control={form.control}
-                    name={`products.${index}.min_stock`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Minimum Stock Level</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="Minimum stock level" 
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          System will alert when stock falls below this level
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                </td>
+                <td className="p-2">
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={product.min_stock}
+                    onChange={e => updateProduct(index, 'min_stock', parseInt(e.target.value) || 0)}
+                    className="w-full"
+                    min="0"
                   />
-                </div>
-
-                <div className="mt-3 sm:mt-4">
-                  <FormField
-                    control={form.control}
-                    name={`products.${index}.description`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Enter batch description" 
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+                </td>
+                <td className="p-2 text-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeRow(index)}
+                    disabled={products.length === 1}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </td>
+              </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={addRow}
+        className="mt-2"
+      >
+        <Plus className="mr-2 h-4 w-4" /> Add Row
+      </Button>
+
+      {/* Quick add items option */}
+      <div className="bg-muted/50 rounded-md p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Quick Item Addition</h3>
+            <p className="text-xs text-muted-foreground">
+              Add individual items for each batch automatically
+            </p>
           </div>
-        </ScrollArea>
+          <Switch
+            checked={quickAdd.enabled}
+            onCheckedChange={(checked) => setQuickAdd(prev => ({ ...prev, enabled: checked }))}
+          />
+        </div>
         
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full border-dashed border-2 bg-background hover:bg-muted"
-          onClick={addProduct}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Another Batch
-        </Button>
-        
-        <Separator />
-        
-        <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
-          <h3 className="font-medium mb-2 sm:mb-3">Quick Item Addition</h3>
-          <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
-            Enable this option to quickly add multiple items to each batch. Individual SKUs will be left blank for later editing.
-          </p>
-          
-          <div className="flex items-center justify-between">
-            <FormField
-              control={form.control}
-              name="quickAdd.enabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-md">
-                  <div className="space-y-0.5">
-                    <FormLabel>Enable Quick Addition</FormLabel>
-                    <FormDescription>
-                      Add multiple items in one go
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          {form.watch("quickAdd.enabled") && (
-            <div className="mt-3 sm:mt-4">
-              <FormField
-                control={form.control}
-                name="quickAdd.quantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Items to Add</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="Enter quantity"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      These items will inherit batch properties but have unique identifiers
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        {quickAdd.enabled && (
+          <div className="pt-2">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="quantity" className="text-sm">
+                Items per batch:
+              </Label>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                className="w-24"
+                value={quickAdd.quantity}
+                onChange={(e) => setQuickAdd(prev => ({ 
+                  ...prev, 
+                  quantity: parseInt(e.target.value) || 1 
+                }))}
               />
+              <p className="text-xs text-muted-foreground">
+                Each batch will get this many items at the default location
+              </p>
             </div>
-          )}
-        </div>
-        
-        <div className="flex justify-end gap-2 pt-3 sm:pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" className="bg-[#00859e] hover:bg-[#00859e]/90">
-            Add {fields.length} {fields.length === 1 ? 'Batch' : 'Batches'}
-          </Button>
-        </div>
-      </form>
-    </Form>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" className="bg-[#00859e] hover:bg-[#00859e]/90 text-white">
+          <Check className="mr-2 h-4 w-4" /> Confirm
+        </Button>
+      </div>
+    </form>
   );
 };
 

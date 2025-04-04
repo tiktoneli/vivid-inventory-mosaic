@@ -68,6 +68,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const selectedCategoryId = form.watch("category_id");
   const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
   
+  // Determine if we should show standard optional fields
+  // Only show these fields if a category is selected and it includes these attributes
+  const showManufacturer = selectedCategory && selectedCategory.attributes && 
+                          selectedCategory.attributes.includes('manufacturer');
+  const showWarrantyInfo = selectedCategory && selectedCategory.attributes && 
+                          selectedCategory.attributes.includes('warranty_info');
+  const showLifecycleStatus = selectedCategory && selectedCategory.attributes && 
+                          selectedCategory.attributes.includes('lifecycle_status');
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -219,87 +228,108 @@ const ProductForm: React.FC<ProductFormProps> = ({
           </TabsContent>
           
           <TabsContent value="advanced" className="space-y-4 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="manufacturer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Manufacturer</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter manufacturer" {...field} value={field.value || ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="warranty_info"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Warranty Information</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter warranty details" {...field} value={field.value || ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            {/* Category-Specific Attributes - Only show if a category is selected */}
-            {selectedCategory && selectedCategory.attributes && selectedCategory.attributes.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Category-Specific Attributes</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedCategory.attributes.map(attribute => (
-                    <FormField
-                      key={attribute}
-                      control={form.control}
-                      name={attribute as any}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{attribute}</FormLabel>
-                          <FormControl>
-                            <Input placeholder={`Enter ${attribute.toLowerCase()}`} {...field} value={field.value || ''} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
+            {!selectedCategory && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Please select a category first to view additional attributes</p>
               </div>
             )}
             
-            <FormField
-              control={form.control}
-              name="lifecycle_status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lifecycle Status</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value || ''}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="current">Current</SelectItem>
-                      <SelectItem value="deprecated">Deprecated</SelectItem>
-                      <SelectItem value="end_of_life">End of Life</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {selectedCategory && (
+              <div className="space-y-6">
+                {/* Only show manufacturer field if the attribute exists in selected category */}
+                {showManufacturer && (
+                  <FormField
+                    control={form.control}
+                    name="manufacturer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Manufacturer</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter manufacturer" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                {/* Only show warranty info field if the attribute exists in selected category */}
+                {showWarrantyInfo && (
+                  <FormField
+                    control={form.control}
+                    name="warranty_info"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Warranty Information</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter warranty details" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                {/* Only show lifecycle status if the attribute exists in selected category */}
+                {showLifecycleStatus && (
+                  <FormField
+                    control={form.control}
+                    name="lifecycle_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lifecycle Status</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value || ''}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="new">New</SelectItem>
+                            <SelectItem value="current">Current</SelectItem>
+                            <SelectItem value="deprecated">Deprecated</SelectItem>
+                            <SelectItem value="end_of_life">End of Life</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                {/* Display category-specific attributes dynamically */}
+                {selectedCategory && selectedCategory.attributes && selectedCategory.attributes.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Category-Specific Attributes</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedCategory.attributes
+                        .filter(attr => 
+                          !['manufacturer', 'warranty_info', 'lifecycle_status'].includes(attr)
+                        )
+                        .map(attribute => (
+                          <FormField
+                            key={attribute}
+                            control={form.control}
+                            name={attribute as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{attribute}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder={`Enter ${attribute.toLowerCase()}`} {...field} value={field.value || ''} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
         

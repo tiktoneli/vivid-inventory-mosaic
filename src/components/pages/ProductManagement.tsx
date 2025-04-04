@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
@@ -76,21 +77,23 @@ const ProductManagement = () => {
     for (const productData of products) {
       try {
         // Create the product batch
-        const product = await createProduct({
+        const newProduct = await createProduct({
           ...productData,
           sku: productData.batch_code || productData.sku, // Map batch_code to sku field in the database
         });
         
-        createdCount++;
-        
-        // If quick add is enabled, create the specified number of product items
-        if (quickAdd.enabled && quickAdd.quantity > 0 && product && locations.length > 0) {
-          await createProductItems({ 
-            productId: product.id, 
-            locationId: locations[0]?.id || '', // Default to first location 
-            quantity: quickAdd.quantity, 
-            basePrefix: product.sku 
-          });
+        if (newProduct && newProduct.id) {
+          createdCount++;
+          
+          // If quick add is enabled, create the specified number of product items
+          if (quickAdd.enabled && quickAdd.quantity > 0 && locations.length > 0) {
+            await createProductItems({ 
+              productId: newProduct.id, 
+              locationId: locations[0]?.id || '', 
+              quantity: quickAdd.quantity, 
+              basePrefix: newProduct.sku 
+            });
+          }
         }
       } catch (error) {
         console.error("Error creating product batch:", error);

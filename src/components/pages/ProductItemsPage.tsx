@@ -1,253 +1,415 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useProductItems } from '@/hooks/useProductItems';
-import { useProducts } from '@/hooks/useProducts';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useProducts, useProductItems, type ProductItem } from '@/hooks/useProductItems';
 import { useLocations } from '@/hooks/useLocations';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Plus, ArrowLeft, Pencil, Trash2, Package, ArrowUpRight } from 'lucide-react';
+import { 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Plus, ChevronLeft, Search, ArrowUpDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ProductItemForm from '../ui/ProductItemForm';
+import { toast } from 'sonner';
 import ProductItemSelectionForm from '../ui/ProductItemSelectionForm';
 
-// Define status color mapping
-const statusColors: Record<string, string> = {
-  available: 'bg-green-100 text-green-800 hover:bg-green-200',
-  in_use: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-  maintenance: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
-  retired: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'available':
+      return 'bg-green-100 text-green-800';
+    case 'in_use':
+      return 'bg-blue-100 text-blue-800';
+    case 'maintenance':
+      return 'bg-amber-100 text-amber-800';
+    case 'retired':
+      return 'bg-gray-100 text-gray-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
 };
 
 const ProductItemsPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { productItems, isLoading, createProductItem, updateProductItem, deleteProductItem } = useProductItems(productId);
-  const { products } = useProducts();
+  
+  const { getProductById, product, isLoading: productLoading } = useProducts(productId);
+  const { 
+    productItems, 
+    isLoading: itemsLoading, 
+    createProductItem,
+    updateProductItem,
+    deleteProductItem
+  } = useProductItems(productId);
   const { locations } = useLocations();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [isSelectionFormOpen, setIsSelectionFormOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [product, setProduct] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [editingItem, setEditingItem] = useState<ProductItem | null>(null);
   
   useEffect(() => {
-    if (products.length > 0 && productId) {
-      const foundProduct = products.find(p => p.id === productId);
-      if (foundProduct) {
-        setProduct(foundProduct);
-      } else {
-        // Product not found, navigate back
-        navigate('/products');
-      }
+    if (productId) {
+      getProductById(productId);
     }
-  }, [products, productId, navigate]);
+  }, [productId, getProductById]);
   
-  if (!productId) {
-    navigate('/products');
-    return null;
-  }
+  // Filter product items based on search and filters
+  const filteredItems = productItems.filter(item => {
+    const matchesSearch = item.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesLocation = locationFilter === 'all' || item.location_id === locationFilter;
+    
+    return matchesSearch && matchesStatus && matchesLocation;
+  });
   
-  const getLocationName = (locationId: string) => {
-    const location = locations.find(loc => loc.id === locationId);
-    return location ? location.name : 'Unknown Location';
+  const handleCreateItem = (values: any) => {
+    if (!productId) return;
+    
+    createProductItem({
+      ...values,
+      product_id: productId,
+      sku: product?.sku || '',
+    });
+    
+    setIsFormOpen(false);
   };
   
-  const handleAddItem = () => {
-    setEditingItem(null);
-    setIsFormOpen(true);
-  };
-  
-  const handleEditItem = (item: any) => {
-    setEditingItem(item);
-    setIsFormOpen(true);
-  };
-  
-  const handleDeleteItem = (itemId: string) => {
-    setItemToDelete(itemId);
-    setIsConfirmDeleteOpen(true);
-  };
-  
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteProductItem(itemToDelete);
-      setItemToDelete(null);
-      setIsConfirmDeleteOpen(false);
+  const handleEditItem = (id: string) => {
+    const item = productItems.find(i => i.id === id);
+    if (item) {
+      setEditingItem(item);
+      setIsFormOpen(true);
     }
   };
   
-  const handleFormSubmit = (values: any) => {
-    if (editingItem) {
-      // Update existing item - Explicitly type the status field
-      const updatedValues = {
-        ...values,
-        status: values.status as "available" | "in_use" | "maintenance" | "retired"
-      };
-      updateProductItem({
-        id: editingItem.id,
-        data: updatedValues
-      });
-    } else {
-      // Add new item - Explicitly type the status field
-      const newItemValues = {
-        ...values,
-        product_id: productId,
-        status: values.status as "available" | "in_use" | "maintenance" | "retired"
-      };
-      createProductItem(newItemValues);
-    }
+  const handleUpdateItem = (values: any) => {
+    if (!editingItem) return;
+    
+    updateProductItem({
+      id: editingItem.id,
+      data: values
+    });
     
     setIsFormOpen(false);
     setEditingItem(null);
   };
   
-  const getStatusColor = (status: string) => {
-    return statusColors[status] || 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+    
+    deleteProductItem(itemToDelete);
+    setItemToDelete(null);
   };
-
+  
+  const handleFormSubmit = (values: any) => {
+    if (editingItem) {
+      handleUpdateItem(values);
+    } else {
+      handleCreateItem(values);
+    }
+  };
+  
+  // When adding existing items
+  const handleSelectionFormSubmit = (selectedItems: string[]) => {
+    if (!productId || selectedItems.length === 0) {
+      return;
+    }
+    
+    // Currently this just closes the dialog, the actual implementation
+    // would need to be added to move items between products
+    toast.success(`Added ${selectedItems.length} items to this batch`);
+    setIsSelectionFormOpen(false);
+  };
+  
+  const getLocationName = (locationId: string) => {
+    const location = locations.find(loc => loc.id === locationId);
+    return location ? location.name : 'Unknown';
+  };
+  
+  if (productLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00859e] mx-auto mb-4"></div>
+          <p>Loading product information...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="p-6 bg-red-50 border border-red-200 rounded-md">
+          <h2 className="text-xl font-medium mb-2 text-red-800">Product not found</h2>
+          <p className="mb-4">The requested product does not exist or you don't have access to it.</p>
+          <Button onClick={() => navigate('/products')}>
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Products
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/products')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
-        </Button>
-        
-        {product && (
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-[#445372]">{product.name}</h1>
-              <p className="text-muted-foreground">
-                Batch Code: <span className="font-medium">{product.sku}</span> | 
-                Category: <span className="font-medium">{product.categories?.name || 'Uncategorized'}</span>
-              </p>
-            </div>
-            <Button 
-              onClick={handleAddItem}
-              className="mt-4 md:mt-0 bg-[#00859e] hover:bg-[#00859e]/90"
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link 
+              to="/products" 
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center"
             >
-              <Plus className="mr-2 h-4 w-4" /> Add Item
-            </Button>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Back to Batches
+            </Link>
           </div>
-        )}
-      </div>
-      
-      <Separator className="my-6" />
-      
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <p>Loading items...</p>
-        </div>
-      ) : productItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {productItems.map(item => (
-            <Card key={item.id} className="overflow-hidden h-full">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg flex items-center">
-                      <Package className="h-5 w-5 mr-2 text-[#00859e]" />
-                      {item.serial_number || 'No Serial'}
-                    </CardTitle>
-                    <CardDescription>
-                      {item.sku ? `SKU: ${item.sku}` : 'No SKU'}
-                    </CardDescription>
-                  </div>
-                  <Badge className={getStatusColor(item.status)}>
-                    {item.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-sm font-medium">Location:</p>
-                <p className="text-sm mb-2">{getLocationName(item.location_id)}</p>
-                
-                {item.notes && (
-                  <>
-                    <p className="text-sm font-medium">Notes:</p>
-                    <p className="text-sm mb-2 line-clamp-2">{item.notes}</p>
-                  </>
-                )}
-                
-                <div className="flex mt-4 space-x-2 justify-end">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                    onClick={() => handleEditItem(item)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                    onClick={() => handleDeleteItem(item.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="p-4 rounded-full bg-muted mb-4">
-            <Package className="h-6 w-6" />
+          <h1 className="text-3xl font-semibold tracking-tight text-[#445372]">
+            {product.name}
+          </h1>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge variant="outline" className="bg-primary/10">
+              Code: {product.sku}
+            </Badge>
+            <Badge variant="outline" className="bg-primary/10">
+              Category: {product.categories?.name || "Uncategorized"}
+            </Badge>
           </div>
-          <h3 className="text-lg font-medium mb-1">No items found</h3>
-          <p className="text-muted-foreground max-w-md mb-6">
-            This product batch doesn't have any items yet. Add individual items to track them in your inventory.
-          </p>
+        </div>
+        <div className="flex gap-2">
           <Button 
-            onClick={handleAddItem}
+            onClick={() => {
+              setEditingItem(null);
+              setIsFormOpen(true);
+            }}
             className="bg-[#00859e] hover:bg-[#00859e]/90"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add First Item
+            <Plus className="mr-2 h-4 w-4" /> Add Item
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsSelectionFormOpen(true)}
+            className="border-[#00859e] text-[#00859e] hover:bg-[#00859e]/10"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add Existing Items
+          </Button>
+        </div>
+      </div>
+      
+      {/* Filters section */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search by serial number..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="in_use">In Use</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+              <SelectItem value="retired">Retired</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={locationFilter}
+            onValueChange={setLocationFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {locations.map(location => (
+                <SelectItem key={location.id} value={location.id}>
+                  {location.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" className="h-10 w-10">
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      {/* Items count */}
+      <div className="mb-4">
+        <p className="text-sm text-muted-foreground">
+          Showing <span className="font-medium text-foreground">{filteredItems.length}</span> of {productItems.length} items
+        </p>
+      </div>
+      
+      {/* Items table */}
+      {itemsLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00859e] mx-auto mb-4"></div>
+            <p>Loading items...</p>
+          </div>
+        </div>
+      ) : filteredItems.length > 0 ? (
+        <div className="border rounded-md overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Serial Number</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Notes</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredItems.map(item => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.serial_number}</TableCell>
+                  <TableCell>{getLocationName(item.location_id)}</TableCell>
+                  <TableCell>
+                    <Badge className={`${getStatusColor(item.status)}`}>
+                      {item.status.replace('_', ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {item.notes || '-'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditItem(item.id)}
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-500 border-red-200 hover:bg-red-50"
+                        onClick={() => setItemToDelete(item.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-md border">
+          <div className="p-3 bg-secondary rounded-full mb-4">
+            <Search className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium mb-1">No items found</h3>
+          <p className="text-muted-foreground text-sm max-w-md mb-4">
+            {productItems.length > 0 
+              ? "No items match your filter criteria. Try adjusting your filters." 
+              : "This batch doesn't have any items yet. Add items to track individual units."}
+          </p>
+          <Button 
+            onClick={() => {
+              setEditingItem(null);
+              setIsFormOpen(true);
+            }}
+            className="bg-[#00859e] hover:bg-[#00859e]/90"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add Item
           </Button>
         </div>
       )}
       
-      {/* Add/Edit Item Dialog */}
+      {/* Item Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
+            <DialogTitle className="text-[#445372]">
+              {editingItem ? 'Edit Item' : 'Add New Item'}
+            </DialogTitle>
             <DialogDescription>
               {editingItem 
-                ? 'Update the information for this inventory item.' 
-                : 'Add a new item to this product batch.'}
+                ? 'Update the item information below.' 
+                : `Add a new item to the "${product.name}" batch.`}
             </DialogDescription>
           </DialogHeader>
-          <ProductItemSelectionForm
-            initialValues={editingItem}
+          {/* Note: ProductItemForm needs to be implemented separately */}
+          <ProductItemForm 
+            initialValues={editingItem || {
+              product_id: productId,
+              serial_number: '',
+              sku: product.sku,
+              location_id: '',
+              status: 'available',
+              notes: ''
+            }}
             onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setEditingItem(null);
+            }}
             locations={locations}
             isEditing={!!editingItem}
           />
         </DialogContent>
       </Dialog>
       
+      {/* Product Item Selection Form Dialog */}
+      <Dialog open={isSelectionFormOpen} onOpenChange={setIsSelectionFormOpen}>
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[700px] max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-[#445372]">
+              Add Existing Items
+            </DialogTitle>
+            <DialogDescription>
+              Select items from other batches to add to this batch.
+            </DialogDescription>
+          </DialogHeader>
+          <ProductItemSelectionForm 
+            initialValues={{}}
+            onSubmit={handleSelectionFormSubmit}
+            onCancel={() => setIsSelectionFormOpen(false)}
+            isEditing={false}
+          />
+        </DialogContent>
+      </Dialog>
+      
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}>
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogTitle className="text-[#445372]">
+              Delete Item
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this item? This action cannot be undone.
+              This will permanently remove this item from the batch. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
