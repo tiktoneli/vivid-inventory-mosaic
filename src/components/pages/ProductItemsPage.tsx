@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, ArrowLeft, Pencil, Trash2, Package, ArrowUpRight } from 'lucide-react';
 import ProductItemSelectionForm from '../ui/ProductItemSelectionForm';
 
+// Define status color mapping
 const statusColors: Record<string, string> = {
   available: 'bg-green-100 text-green-800 hover:bg-green-200',
   in_use: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
@@ -230,7 +231,6 @@ const ProductItemsPage = () => {
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormOpen(false)}
             locations={locations}
-            productId={productId}
             isEditing={!!editingItem}
           />
         </DialogContent>

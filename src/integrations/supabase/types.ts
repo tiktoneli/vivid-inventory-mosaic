@@ -191,7 +191,6 @@ export type Database = {
           is_active: boolean | null
           license_keys: string | null
           lifecycle_status: string | null
-          location: string
           mac_address: string | null
           manufacturer: string | null
           min_stock: number
@@ -215,7 +214,6 @@ export type Database = {
           is_active?: boolean | null
           license_keys?: string | null
           lifecycle_status?: string | null
-          location: string
           mac_address?: string | null
           manufacturer?: string | null
           min_stock?: number
@@ -239,7 +237,6 @@ export type Database = {
           is_active?: boolean | null
           license_keys?: string | null
           lifecycle_status?: string | null
-          location?: string
           mac_address?: string | null
           manufacturer?: string | null
           min_stock?: number
@@ -259,20 +256,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_location_fkey"
-            columns: ["location"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_location_fkey"
-            columns: ["location"]
-            isOneToOne: false
-            referencedRelation: "product_inventory"
-            referencedColumns: ["location_id"]
           },
         ]
       }

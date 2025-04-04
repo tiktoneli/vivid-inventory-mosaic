@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
@@ -79,14 +78,14 @@ const ProductManagement = () => {
         // Create the product batch
         const product = await createProduct({
           ...productData,
-          sku: productData.batch_code, // Map batch_code to sku field in the database
+          sku: productData.batch_code || productData.sku, // Map batch_code to sku field in the database
         });
         
         createdCount++;
         
         // If quick add is enabled, create the specified number of product items
-        if (quickAdd.enabled && quickAdd.quantity > 0) {
-          createProductItems({ 
+        if (quickAdd.enabled && quickAdd.quantity > 0 && product && locations.length > 0) {
+          await createProductItems({ 
             productId: product.id, 
             locationId: locations[0]?.id || '', // Default to first location 
             quantity: quickAdd.quantity, 
@@ -100,8 +99,8 @@ const ProductManagement = () => {
     
     if (createdCount > 0) {
       toast.success(`Successfully added ${createdCount} product batch${createdCount > 1 ? 'es' : ''} to inventory`);
-      if (quickAdd.enabled) {
-        toast.success(`Added ${quickAdd.quantity * createdCount} items to inventory`);
+      if (quickAdd.enabled && quickAdd.quantity > 0) {
+        toast.success(`Added items to inventory`);
       }
     }
     
@@ -133,6 +132,20 @@ const ProductManagement = () => {
     { id: 'All', name: 'All Categories' },
     ...categories.map(cat => ({ id: cat.id, name: cat.name }))
   ];
+
+  // Get location text for a product
+  const getLocationText = (product: any) => {
+    if (!product.locations || product.locations.length === 0) {
+      // No items in batch
+      return "None";
+    } else if (product.locations.length === 1) {
+      // Single location
+      return product.locations[0];
+    } else {
+      // Multiple locations
+      return "Various";
+    }
+  };
 
   // Generate pagination items
   const renderPaginationItems = () => {
@@ -185,6 +198,7 @@ const ProductManagement = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Header section */}
       <section className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -226,6 +240,7 @@ const ProductManagement = () => {
         </div>
       </section>
 
+      {/* Search and filter section */}
       <section className="mb-8">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-grow">
@@ -265,6 +280,7 @@ const ProductManagement = () => {
         </div>
       </section>
 
+      {/* Product count and export/import buttons section */}
       <section className="mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
           <div className="flex items-center gap-2">
@@ -293,6 +309,7 @@ const ProductManagement = () => {
         </div>
       </section>
 
+      {/* Products grid section */}
       <section>
         {productsLoading ? (
           <div className="flex justify-center items-center py-12">
@@ -302,7 +319,7 @@ const ProductManagement = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentProducts.map((product) => {
-                const locationName = locations.find(loc => loc.id === product.location)?.name || "Various";
+                const locationName = getLocationText(product);
                 
                 return (
                   <ProductCard
@@ -359,7 +376,7 @@ const ProductManagement = () => {
         )}
       </section>
 
-      {/* Product Form Dialog - Fixed for mobile */}
+      {/* Product Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
@@ -388,7 +405,7 @@ const ProductManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Batch Product Form Dialog - Fixed for mobile */}
+      {/* Batch Product Form Dialog */}
       <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
         <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">

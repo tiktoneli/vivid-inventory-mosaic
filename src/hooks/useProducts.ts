@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ export type ProductWithCategory = Product & {
     name: string;
   };
   stock?: number; // Calculated from product_items
+  locations?: string[]; // Array of location names for this product's items
 };
 
 export type ProductInput = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
@@ -81,6 +83,7 @@ export const useProducts = () => {
     // Fetch inventory data for each product
     const productsWithStock = await Promise.all(
       productsData.map(async (product) => {
+        // Get stock count
         const { data: stockData, error: stockError } = await supabase.rpc(
           'get_product_total_stock',
           { p_product_id: product.id }
@@ -88,12 +91,44 @@ export const useProducts = () => {
 
         if (stockError) {
           console.error('Error fetching stock data:', stockError);
-          return { ...product, stock: 0 };
+          return { ...product, stock: 0, locations: [] };
         }
 
+        // Get item locations
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('product_items')
+          .select('location_id')
+          .eq('product_id', product.id);
+          
+        if (itemsError) {
+          console.error('Error fetching item locations:', itemsError);
+          return { 
+            ...product, 
+            stock: stockData || 0,
+            locations: []
+          };
+        }
+        
+        // Get unique location IDs
+        const locationIds = [...new Set(itemsData.map(item => item.location_id))];
+        
+        // Fetch location names if there are any items
+        let locationNames: string[] = [];
+        if (locationIds.length > 0) {
+          const { data: locationsData, error: locationsError } = await supabase
+            .from('locations')
+            .select('name')
+            .in('id', locationIds);
+            
+          if (!locationsError && locationsData) {
+            locationNames = locationsData.map(loc => loc.name);
+          }
+        }
+        
         return { 
           ...product, 
-          stock: stockData || 0 
+          stock: stockData || 0,
+          locations: locationNames
         };
       })
     );
@@ -158,7 +193,6 @@ export const useProducts = () => {
   };
 
   // New functions for product items
-
   const createProductItem = async (productItem: Omit<ProductItem, 'id' | 'created_at' | 'updated_at'>): Promise<ProductItem> => {
     const { data, error } = await supabase
       .from('product_items')
@@ -179,13 +213,12 @@ export const useProducts = () => {
     return data;
   };
 
-  // Fixed function with arrow function syntax
   const createProductItems = async (
     productId: string,
     locationId: string,
     quantity: number,
     basePrefix: string = ''
-  ) => {  // Changed to arrow function syntax
+  ) => {
     let successCount = 0;
     
     for (let i = 0; i < quantity; i++) {
@@ -274,8 +307,8 @@ export const useProducts = () => {
   const createProductItemMutation = useMutation({
     mutationFn: createProductItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['productItems'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['productItems'] });
       toast.success('Product item created successfully');
     },
   });
