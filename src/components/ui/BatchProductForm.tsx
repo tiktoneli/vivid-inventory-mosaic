@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,7 +22,6 @@ const batchProductSchema = z.object({
       name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
       batch_code: z.string().min(3, { message: 'Batch code must be at least 3 characters.' }),
       category_id: z.string().min(1, { message: 'Category is required.' }),
-      location: z.string().min(1, { message: 'Location is required.' }),
       min_stock: z.coerce.number().min(0, { message: 'Minimum stock cannot be negative.' }).default(0),
       is_active: z.boolean().default(true),
       description: z.string().optional(),
@@ -47,7 +46,6 @@ const BatchProductForm = ({
   onSubmit,
   onCancel,
   categories,
-  locations,
 }: BatchProductFormProps) => {
   const form = useForm<BatchProductFormValues>({
     resolver: zodResolver(batchProductSchema),
@@ -57,7 +55,6 @@ const BatchProductForm = ({
           name: '',
           batch_code: '',
           category_id: '',
-          location: '',
           min_stock: 0,
           is_active: true,
           description: '',
@@ -84,7 +81,6 @@ const BatchProductForm = ({
       name: '',
       batch_code: '',
       category_id: '',
-      location: '',
       min_stock: 0,
       is_active: true,
       description: '',
@@ -94,7 +90,7 @@ const BatchProductForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <ScrollArea className="max-h-[60vh] overflow-y-auto pr-2 -mr-2">
+        <ScrollArea className="max-h-[50vh] overflow-y-auto pr-2 -mr-2">
           <div className="space-y-6">
             {fields.map((field, index) => (
               <div key={field.id} className="p-3 sm:p-4 border rounded-md relative">
@@ -144,7 +140,7 @@ const BatchProductForm = ({
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
+                <div className="mt-3 sm:mt-4">
                   <FormField
                     control={form.control}
                     name={`products.${index}.category_id`}
@@ -164,34 +160,6 @@ const BatchProductForm = ({
                             {categories.map(category => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name={`products.${index}.location`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Default Storage Location *</FormLabel>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select location" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {locations.map(location => (
-                              <SelectItem key={location.id} value={location.id}>
-                                {location.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -264,7 +232,7 @@ const BatchProductForm = ({
         <div className="bg-muted/50 p-3 sm:p-4 rounded-lg">
           <h3 className="font-medium mb-2 sm:mb-3">Quick Item Addition</h3>
           <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
-            Enable this option to quickly add multiple items to a batch. Individual SKUs will be left blank for later editing.
+            Enable this option to quickly add multiple items to each batch. Individual SKUs will be left blank for later editing.
           </p>
           
           <div className="flex items-center justify-between">

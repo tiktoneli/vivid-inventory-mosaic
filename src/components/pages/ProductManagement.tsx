@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
@@ -8,7 +9,6 @@ import { Link } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
-import { useProductItems } from '@/hooks/useProductItems';
 import { toast } from 'sonner';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,8 +17,7 @@ import BatchProductForm from '../ui/BatchProductForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ProductManagement = () => {
-  const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct } = useProducts();
-  const { createProductItem } = useProductItems();
+  const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct, createProductItems } = useProducts();
   const { categories } = useCategories();
   const { locations } = useLocations();
   
@@ -71,47 +70,41 @@ const ProductManagement = () => {
     setEditingProduct(null);
   };
 
-  const handleBatchFormSubmit = (products: any[], quickAdd: { enabled: boolean; quantity: number }) => {
+  const handleBatchFormSubmit = async (products: any[], quickAdd: { enabled: boolean; quantity: number }) => {
     let createdCount = 0;
     
-    // Process each product in the batch (which are now batches themselves)
-    const processProducts = async () => {
-      for (const productData of products) {
-        try {
-          // Create the product batch
-          const product = await createProduct({
-            ...productData,
-            sku: productData.batch_code, // Map batch_code to sku field in the database
+    // Process each product in the batch
+    for (const productData of products) {
+      try {
+        // Create the product batch
+        const product = await createProduct({
+          ...productData,
+          sku: productData.batch_code, // Map batch_code to sku field in the database
+        });
+        
+        createdCount++;
+        
+        // If quick add is enabled, create the specified number of product items
+        if (quickAdd.enabled && quickAdd.quantity > 0) {
+          createProductItems({ 
+            productId: product.id, 
+            locationId: locations[0]?.id || '', // Default to first location 
+            quantity: quickAdd.quantity, 
+            basePrefix: product.sku 
           });
-          createdCount++;
-          
-          // If quick add is enabled, create the specified number of product items
-          if (quickAdd.enabled && quickAdd.quantity > 0) {
-            for (let i = 0; i < quickAdd.quantity; i++) {
-              await createProductItem({
-                product_id: product.id,
-                sku: "", // Leave blank for later editing
-                serial_number: `${product.name}-${i+1}`, // Generate a temporary serial number
-                location_id: product.location,
-                status: "available",
-                notes: `Auto-created as part of batch ${productData.batch_code}`
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error creating product batch:", error);
         }
+      } catch (error) {
+        console.error("Error creating product batch:", error);
       }
-      
-      if (createdCount > 0) {
-        toast.success(`Successfully added ${createdCount} product batch${createdCount > 1 ? 'es' : ''} to inventory`);
-        if (quickAdd.enabled) {
-          toast.success(`Added ${quickAdd.quantity * createdCount} items to inventory`);
-        }
-      }
-    };
+    }
     
-    processProducts();
+    if (createdCount > 0) {
+      toast.success(`Successfully added ${createdCount} product batch${createdCount > 1 ? 'es' : ''} to inventory`);
+      if (quickAdd.enabled) {
+        toast.success(`Added ${quickAdd.quantity * createdCount} items to inventory`);
+      }
+    }
+    
     setIsBatchFormOpen(false);
   };
 
@@ -120,9 +113,8 @@ const ProductManagement = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           product.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || product.category_id === selectedCategory;
-    const matchesLocation = selectedLocation === 'All' || product.location === selectedLocation;
     const matchesStatus = showInactiveProducts ? true : product.is_active;
-    return matchesSearch && matchesCategory && matchesLocation && matchesStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   // Pagination logic
@@ -140,12 +132,6 @@ const ProductManagement = () => {
   const categoryOptions = [
     { id: 'All', name: 'All Categories' },
     ...categories.map(cat => ({ id: cat.id, name: cat.name }))
-  ];
-
-  // Get unique locations for filter
-  const locationOptions = [
-    { id: 'All', name: 'All Locations' },
-    ...locations.map(loc => ({ id: loc.id, name: loc.name }))
   ];
 
   // Generate pagination items
@@ -268,20 +254,6 @@ const ProductManagement = () => {
               </SelectContent>
             </Select>
             
-            <Select
-              value={selectedLocation}
-              onValueChange={setSelectedLocation}
-            >
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select Location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locationOptions.map(location => (
-                  <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
             <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10">
               <Filter className="h-4 w-4" />
             </button>
@@ -330,7 +302,7 @@ const ProductManagement = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentProducts.map((product) => {
-                const locationName = locations.find(loc => loc.id === product.location)?.name || "Unknown";
+                const locationName = locations.find(loc => loc.id === product.location)?.name || "Various";
                 
                 return (
                   <ProductCard
@@ -387,10 +359,10 @@ const ProductManagement = () => {
         )}
       </section>
 
-      {/* Product Form Dialog - Made more responsive */}
+      {/* Product Form Dialog - Fixed for mobile */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] h-[90vh] sm:h-auto max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
             <DialogTitle className="text-[#445372]">
               {editingProduct ? 'Edit Batch' : 'Add New Batch'}
             </DialogTitle>
@@ -400,7 +372,7 @@ const ProductManagement = () => {
                 : 'Fill out the form below to add a new product batch to inventory.'}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[calc(90vh-10rem)] pr-4 -mr-4">
+          <div className="p-4 md:p-6 overflow-auto max-h-[calc(90vh-120px)]">
             <ProductForm 
               initialValues={editingProduct}
               onSubmit={handleFormSubmit}
@@ -410,28 +382,29 @@ const ProductManagement = () => {
                 name: cat.name, 
                 attributes: cat.attributes || [] 
               }))}
-              locations={locations}
               isEditing={!!editingProduct}
             />
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Batch Product Form Dialog - Made more responsive */}
+      {/* Batch Product Form Dialog - Fixed for mobile */}
       <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
-        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] h-[90vh] sm:h-auto max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
             <DialogTitle className="text-[#445372]">Add Multiple Batches</DialogTitle>
             <DialogDescription>
               Quickly add multiple product batches to inventory at once. You can fill in more details later.
             </DialogDescription>
           </DialogHeader>
-          <BatchProductForm 
-            onSubmit={handleBatchFormSubmit}
-            onCancel={() => setIsBatchFormOpen(false)}
-            categories={categories}
-            locations={locations}
-          />
+          <div className="p-4 md:p-6 overflow-auto max-h-[calc(90vh-120px)]">
+            <BatchProductForm 
+              onSubmit={handleBatchFormSubmit}
+              onCancel={() => setIsBatchFormOpen(false)}
+              categories={categories}
+              locations={locations}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

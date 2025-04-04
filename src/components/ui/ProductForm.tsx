@@ -11,7 +11,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Category } from '@/hooks/useCategories';
-import { Location } from '@/hooks/useLocations';
 
 // Define the form schema
 const productSchema = z.object({
@@ -25,11 +24,6 @@ const productSchema = z.object({
   // Custom fields (can be expanded)
   manufacturer: z.string().optional().nullable(),
   warranty_info: z.string().optional().nullable(),
-  serial_number: z.string().optional().nullable(),
-  firmware_version: z.string().optional().nullable(),
-  license_keys: z.string().optional().nullable(),
-  compatibility_info: z.string().optional().nullable(),
-  power_consumption: z.string().optional().nullable(),
   lifecycle_status: z.string().optional().nullable(),
 });
 
@@ -40,7 +34,6 @@ interface ProductFormProps {
   onSubmit: (values: any) => void;
   onCancel: () => void;
   categories: { id: string; name: string; attributes: string[] }[];
-  locations: Location[];
   isEditing?: boolean;
 }
 
@@ -49,7 +42,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   onCancel,
   categories,
-  locations,
   isEditing = false
 }) => {
   const form = useForm<ProductFormValues>({
@@ -64,11 +56,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       price: null,
       manufacturer: null,
       warranty_info: null,
-      serial_number: null,
-      firmware_version: null,
-      license_keys: null,
-      compatibility_info: null,
-      power_consumption: null,
       lifecycle_status: null,
     },
   });
@@ -262,8 +249,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
               />
             </div>
             
-            {/* Additional fields based on selected category */}
-            {selectedCategory?.attributes && selectedCategory.attributes.length > 0 && (
+            {/* Category-Specific Attributes - Only show if a category is selected */}
+            {selectedCategory && selectedCategory.attributes && selectedCategory.attributes.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Category-Specific Attributes</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
