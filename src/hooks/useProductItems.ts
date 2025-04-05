@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ProductItem } from './useProducts';
+import { ProductItem } from '@/components/pages/ProductItemsPage';
 
 export type ProductItemInput = Omit<ProductItem, 'id' | 'created_at' | 'updated_at'>;
 
@@ -28,7 +28,7 @@ export const useProductItems = (productId?: string) => {
       throw error;
     }
 
-    return data;
+    return data || [];
   };
 
   const createProductItem = async (item: ProductItemInput): Promise<ProductItem> => {
@@ -51,11 +51,11 @@ export const useProductItems = (productId?: string) => {
     return data;
   };
 
-  const updateProductItem = async (id: string, updates: Partial<ProductItemInput>): Promise<ProductItem> => {
-    const { data, error } = await supabase
+  const updateProductItem = async ({ id, data }: { id: string; data: Partial<ProductItemInput> }): Promise<ProductItem> => {
+    const { data: updatedItem, error } = await supabase
       .from('product_items')
       .update({ 
-        ...updates, 
+        ...data, 
         updated_at: new Date().toISOString() 
       })
       .eq('id', id)
@@ -69,7 +69,7 @@ export const useProductItems = (productId?: string) => {
       throw error;
     }
 
-    return data;
+    return updatedItem;
   };
 
   const deleteProductItem = async (id: string): Promise<void> => {
@@ -102,8 +102,7 @@ export const useProductItems = (productId?: string) => {
   });
 
   const updateProductItemMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<ProductItemInput> }) => 
-      updateProductItem(id, data),
+    mutationFn: updateProductItem,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['productItems'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });

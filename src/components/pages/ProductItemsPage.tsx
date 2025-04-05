@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProductItems } from '@/hooks/useProductItems';
@@ -17,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ProductItemForm from '../ui/ProductItemForm';
 import { toast } from 'sonner';
 import ProductItemSelectionForm from '../ui/ProductItemSelectionForm';
+import { useQuery } from '@tanstack/react-query';
 
 // Define the ProductItem type
 export interface ProductItem {
@@ -50,7 +50,10 @@ const ProductItemsPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   
-  const { getProductById, product, isLoading: productLoading } = useProducts();
+  // Use the useSingleProductQuery function instead
+  const { getProductById, useSingleProductQuery } = useProducts();
+  const { data: product, isLoading: productLoading } = useSingleProductQuery(productId);
+  
   const { 
     productItems, 
     isLoading: itemsLoading, 
@@ -68,11 +71,7 @@ const ProductItemsPage = () => {
   const [locationFilter, setLocationFilter] = useState('all');
   const [editingItem, setEditingItem] = useState<ProductItem | null>(null);
   
-  useEffect(() => {
-    if (productId) {
-      getProductById(productId);
-    }
-  }, [productId, getProductById]);
+  // We don't need the useEffect anymore since we're using React Query
   
   // Filter product items based on search and filters
   const filteredItems = productItems.filter(item => {

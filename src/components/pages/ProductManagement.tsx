@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
@@ -15,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import BatchProductForm from '../ui/BatchProductForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ProductInput } from '@/hooks/useProducts';
 
 const ProductManagement = () => {
   const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct, createProductItems } = useProducts();
@@ -70,19 +70,18 @@ const ProductManagement = () => {
     setEditingProduct(null);
   };
 
-  const handleBatchFormSubmit = async (products: any[], quickAdd: { enabled: boolean; quantity: number }) => {
+  const handleBatchFormSubmit = async (products: ProductInput[], quickAdd: { enabled: boolean; quantity: number }) => {
     let createdCount = 0;
     
     // Process each product in the batch
     for (const productData of products) {
       try {
         // Create the product batch
-        const newProduct = await createProduct({
-          ...productData,
-          sku: productData.batch_code || productData.sku, // Map batch_code to sku field in the database
-        });
+        const result = await createProduct(productData);
         
-        if (newProduct && newProduct.id) {
+        // TypeScript needs us to check if result exists and has an id
+        if (result && typeof result === 'object' && 'id' in result) {
+          const newProduct = result;
           createdCount++;
           
           // If quick add is enabled, create the specified number of product items

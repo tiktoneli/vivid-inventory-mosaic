@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -60,6 +59,76 @@ export type ProductInventory = {
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
+
+  // Add the getProductById function
+  const getProductById = async (id: string): Promise<ProductWithCategory | null> => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories:category_id (
+          name
+        )
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching product:', error);
+      return null;
+    }
+    
+    // Get stock count
+    const { data: stockData, error: stockError } = await supabase.rpc(
+      'get_product_total_stock',
+      { p_product_id: data.id }
+    );
+
+    if (stockError) {
+      console.error('Error fetching stock data:', stockError);
+    }
+    
+    // Get item locations
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('product_items')
+      .select('location_id')
+      .eq('product_id', data.id);
+      
+    if (itemsError) {
+      console.error('Error fetching item locations:', itemsError);
+    }
+    
+    // Get unique location IDs
+    const locationIds = itemsData ? [...new Set(itemsData.map(item => item.location_id))] : [];
+    
+    // Fetch location names if there are any items
+    let locationNames: string[] = [];
+    if (locationIds.length > 0) {
+      const { data: locationsData, error: locationsError } = await supabase
+        .from('locations')
+        .select('name')
+        .in('id', locationIds);
+        
+      if (!locationsError && locationsData) {
+        locationNames = locationsData.map(loc => loc.name);
+      }
+    }
+    
+    return {
+      ...data,
+      stock: stockData || 0,
+      locations: locationNames
+    };
+  };
+
+  // Create a query for a single product
+  const useSingleProductQuery = (id: string | undefined) => {
+    return useQuery({
+      queryKey: ['product', id],
+      queryFn: () => id ? getProductById(id) : null,
+      enabled: !!id,
+    });
+  };
 
   const fetchProducts = async (): Promise<ProductWithCategory[]> => {
     // Fetch basic product data
@@ -339,5 +408,7 @@ export const useProducts = () => {
     createProductItems: createProductItemsMutation.mutate,
     getProductInventory,
     getProductItems,
+    getProductById, // Export the new function
+    useSingleProductQuery, // Export the new query hook
   };
 };
