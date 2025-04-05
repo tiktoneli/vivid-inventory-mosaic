@@ -54,6 +54,7 @@ const ProductManagement = () => {
     setProductToDelete(null);
   };
 
+  // Fixed promise handling in handleFormSubmit
   const handleFormSubmit = async (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string }) => {
     try {
       if (editingProduct) {
@@ -62,6 +63,8 @@ const ProductManagement = () => {
           id: editingProduct.id,
           data: values
         });
+        setIsFormOpen(false);
+        setEditingProduct(null);
       } else {
         // Add new product
         const result = await createProduct(values);
@@ -75,15 +78,15 @@ const ProductManagement = () => {
             basePrefix: result.sku 
           });
         }
+        
+        setIsFormOpen(false);
       }
-      
-      setIsFormOpen(false);
-      setEditingProduct(null);
     } catch (error) {
       console.error('Error handling product submission:', error);
     }
   };
 
+  // Fixed promise handling in handleBatchFormSubmit
   const handleBatchFormSubmit = async (products: ProductInput[], quickAdd: { enabled: boolean; quantity: number }) => {
     let createdCount = 0;
     
@@ -94,17 +97,16 @@ const ProductManagement = () => {
         const result = await createProduct(productData);
         
         // Check if result exists and has an id
-        if (result && typeof result === 'object' && 'id' in result) {
-          const newProduct = result;
+        if (result) {
           createdCount++;
           
           // If quick add is enabled, create the specified number of product items
           if (quickAdd.enabled && quickAdd.quantity > 0 && locations.length > 0) {
             await createProductItems({ 
-              productId: newProduct.id, 
+              productId: result.id, 
               locationId: locations[0]?.id || '', 
               quantity: quickAdd.quantity, 
-              basePrefix: newProduct.sku 
+              basePrefix: result.sku || '' 
             });
           }
         }

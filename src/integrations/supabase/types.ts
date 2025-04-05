@@ -199,7 +199,7 @@ export type Database = {
           power_consumption: string | null
           price: number | null
           serial_number: string | null
-          sku: string
+          sku: string | null
           updated_at: string | null
           warranty_info: string | null
         }
@@ -222,7 +222,7 @@ export type Database = {
           power_consumption?: string | null
           price?: number | null
           serial_number?: string | null
-          sku: string
+          sku?: string | null
           updated_at?: string | null
           warranty_info?: string | null
         }
@@ -245,7 +245,7 @@ export type Database = {
           power_consumption?: string | null
           price?: number | null
           serial_number?: string | null
-          sku?: string
+          sku?: string | null
           updated_at?: string | null
           warranty_info?: string | null
         }

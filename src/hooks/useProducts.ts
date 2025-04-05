@@ -39,7 +39,7 @@ export type ProductInput = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 export type ProductItem = {
   id: string;
   product_id: string;
-  serial_number: string;
+  serial_number: string | null;
   sku: string;
   location_id: string;
   status: "available" | "in_use" | "maintenance" | "retired";
@@ -267,7 +267,9 @@ export const useProducts = () => {
       .from('product_items')
       .insert([{
         ...productItem,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        // Ensure serial_number is explicitly set to null if not provided
+        serial_number: productItem.serial_number || null
       }])
       .select()
       .single();
@@ -282,12 +284,17 @@ export const useProducts = () => {
     return data;
   };
 
-  const createProductItems = async (
-    productId: string,
-    locationId: string,
-    quantity: number,
-    basePrefix: string = ''
-  ) => {
+  const createProductItems = async ({
+    productId,
+    locationId,
+    quantity,
+    basePrefix = ''
+  }: {
+    productId: string;
+    locationId: string;
+    quantity: number;
+    basePrefix?: string;
+  }) => {
     let successCount = 0;
     
     for (let i = 0; i < quantity; i++) {
@@ -295,8 +302,8 @@ export const useProducts = () => {
         // Create basic product item with auto-generated serial numbers
         await createProductItem({
           product_id: productId,
-          sku: "", // Empty SKU to be filled later
-          serial_number: basePrefix ? `${basePrefix}-${i+1}` : `ITEM-${Date.now()}-${i+1}`,
+          sku: basePrefix || '',
+          serial_number: basePrefix ? `${basePrefix}-${i+1}` : null, // Allow null serial numbers
           location_id: locationId,
           status: "available",
           notes: "Auto-generated batch item"

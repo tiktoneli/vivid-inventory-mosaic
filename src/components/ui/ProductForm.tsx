@@ -63,15 +63,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
     },
   });
 
-  // Quick add state
+  // Quick add state - enabled by default for better UX
   const [quickAdd, setQuickAdd] = useState({
-    enabled: false,
+    enabled: !isEditing, // Enable by default for new products, disable for editing
     quantity: 1,
     location: locations.length > 0 ? locations[0].id : '',
   });
 
   const handleSubmit = (values: ProductFormValues) => {
-    onSubmit(values, quickAdd.enabled ? quickAdd : undefined);
+    onSubmit(values, quickAdd);
   };
 
   // Get selected category to show relevant attributes
@@ -79,7 +79,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
   
   // Determine if we should show standard optional fields
-  // Only show these fields if a category is selected and it includes these attributes
   const showManufacturer = selectedCategory && selectedCategory.attributes && 
                           selectedCategory.attributes.includes('manufacturer');
   const showWarrantyInfo = selectedCategory && selectedCategory.attributes && 
@@ -236,63 +235,55 @@ const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />
 
-            {/* Quick add items feature */}
+            {/* Updated Item Creation Section */}
             {!isEditing && locations.length > 0 && (
               <div className="bg-muted/50 rounded-md p-4 space-y-2 mt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold mb-1">Quick Item Addition</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Add individual items for this batch automatically
-                    </p>
-                  </div>
-                  <Switch
-                    checked={quickAdd.enabled}
-                    onCheckedChange={(checked) => setQuickAdd(prev => ({ ...prev, enabled: checked }))}
-                  />
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">Item Creation</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Automatically create individual items for this batch
+                  </p>
                 </div>
                 
-                {quickAdd.enabled && (
-                  <div className="pt-2 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="quantity" className="text-sm w-32">
-                        Items to create:
-                      </Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        min="1"
-                        className="w-24"
-                        value={quickAdd.quantity}
-                        onChange={(e) => setQuickAdd(prev => ({ 
-                          ...prev, 
-                          quantity: parseInt(e.target.value) || 1 
-                        }))}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="location" className="text-sm w-32">
-                        Location:
-                      </Label>
-                      <Select
-                        value={quickAdd.location}
-                        onValueChange={(value) => setQuickAdd(prev => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger id="location" className="w-full">
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.map(location => (
-                            <SelectItem key={location.id} value={location.id}>
-                              {location.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="quantity" className="text-sm w-32">
+                      Items to create:
+                    </Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      className="w-24"
+                      value={quickAdd.quantity}
+                      onChange={(e) => setQuickAdd(prev => ({ 
+                        ...prev, 
+                        quantity: parseInt(e.target.value) || 1 
+                      }))}
+                    />
                   </div>
-                )}
+
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="location" className="text-sm w-32">
+                      Location:
+                    </Label>
+                    <Select
+                      value={quickAdd.location}
+                      onValueChange={(value) => setQuickAdd(prev => ({ ...prev, location: value }))}
+                    >
+                      <SelectTrigger id="location" className="w-full">
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map(location => (
+                          <SelectItem key={location.id} value={location.id}>
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             )}
           </TabsContent>

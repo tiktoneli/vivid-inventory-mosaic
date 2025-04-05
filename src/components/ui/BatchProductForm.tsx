@@ -17,7 +17,7 @@ interface BatchProductFormProps {
 
 const EmptyProductRow = {
   name: '',
-  batch_code: '',
+  sku: '', // Changed batch_code to sku to align with schema
   category_id: '',
   description: '',
   min_stock: 0,
@@ -27,7 +27,7 @@ const EmptyProductRow = {
 const BatchProductForm: React.FC<BatchProductFormProps> = ({ onSubmit, onCancel, categories, locations }) => {
   const [products, setProducts] = useState([{ ...EmptyProductRow }]);
   const [quickAdd, setQuickAdd] = useState<{ enabled: boolean; quantity: number }>({
-    enabled: false,
+    enabled: true, // Default to enabled for better UX
     quantity: 1
   });
 
@@ -52,7 +52,7 @@ const BatchProductForm: React.FC<BatchProductFormProps> = ({ onSubmit, onCancel,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validProducts = products.filter(p => p.name.trim() !== '' && p.batch_code.trim() !== '' && p.category_id);
+    const validProducts = products.filter(p => p.name.trim() !== '' && p.sku.trim() !== '' && p.category_id);
     if (validProducts.length > 0) {
       onSubmit(validProducts, quickAdd);
     }
@@ -87,8 +87,8 @@ const BatchProductForm: React.FC<BatchProductFormProps> = ({ onSubmit, onCancel,
                 <td className="p-2">
                   <Input
                     placeholder="Enter code"
-                    value={product.batch_code}
-                    onChange={e => updateProduct(index, 'batch_code', e.target.value)}
+                    value={product.sku}
+                    onChange={e => updateProduct(index, 'sku', e.target.value)}
                     className="w-full"
                     required
                   />
@@ -156,44 +156,38 @@ const BatchProductForm: React.FC<BatchProductFormProps> = ({ onSubmit, onCancel,
         <Plus className="mr-2 h-4 w-4" /> Add Row
       </Button>
 
-      {/* Quick add items option */}
+      {/* Quick add items option - simplified UI */}
       <div className="bg-muted/50 rounded-md p-4 space-y-2">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold mb-1">Quick Item Addition</h3>
+            <h3 className="text-sm font-semibold mb-1">Item Creation</h3>
             <p className="text-xs text-muted-foreground">
-              Add individual items for each batch automatically
+              Automatically add items for each batch
             </p>
           </div>
-          <Switch
-            checked={quickAdd.enabled}
-            onCheckedChange={(checked) => setQuickAdd(prev => ({ ...prev, enabled: checked }))}
-          />
         </div>
         
-        {quickAdd.enabled && (
-          <div className="pt-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="quantity" className="text-sm">
-                Items per batch:
-              </Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                className="w-24"
-                value={quickAdd.quantity}
-                onChange={(e) => setQuickAdd(prev => ({ 
-                  ...prev, 
-                  quantity: parseInt(e.target.value) || 1 
-                }))}
-              />
-              <p className="text-xs text-muted-foreground">
-                Each batch will get this many items at the default location
-              </p>
-            </div>
+        <div className="pt-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="quantity" className="text-sm">
+              Items per batch:
+            </Label>
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              className="w-24"
+              value={quickAdd.quantity}
+              onChange={(e) => setQuickAdd(prev => ({ 
+                ...prev, 
+                quantity: parseInt(e.target.value) || 1 
+              }))}
+            />
+            <p className="text-xs text-muted-foreground">
+              Each batch will get this many items at the default location
+            </p>
           </div>
-        )}
+        </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

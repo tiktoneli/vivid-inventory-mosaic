@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -36,7 +35,9 @@ export const useProductItems = (productId?: string) => {
       .from('product_items')
       .insert([{ 
         ...item, 
-        created_at: new Date().toISOString() 
+        created_at: new Date().toISOString(),
+        // Ensure serial_number is explicitly set to null if not provided
+        serial_number: item.serial_number || null
       }])
       .select()
       .single();
@@ -86,6 +87,42 @@ export const useProductItems = (productId?: string) => {
     }
   };
 
+  // Create multiple product items at once
+  const createMultipleItems = async ({
+    productId,
+    locationId,
+    quantity,
+    prefix = '',
+    notes = ''
+  }: {
+    productId: string;
+    locationId: string;
+    quantity: number;
+    prefix?: string;
+    notes?: string;
+  }): Promise<number> => {
+    let successCount = 0;
+    
+    for (let i = 0; i < quantity; i++) {
+      try {
+        await createProductItem({
+          product_id: productId,
+          sku: prefix || '',
+          // Allow null serial numbers
+          serial_number: prefix ? `${prefix}-${i+1}` : null,
+          location_id: locationId,
+          status: "available",
+          notes: notes || "Auto-generated item"
+        });
+        successCount++;
+      } catch (error) {
+        console.error("Error creating item", error);
+      }
+    }
+    
+    return successCount;
+  };
+
   const productItemsQuery = useQuery({
     queryKey: ['productItems', productId],
     queryFn: fetchProductItems,
@@ -119,6 +156,15 @@ export const useProductItems = (productId?: string) => {
     },
   });
 
+  const createMultipleItemsMutation = useMutation({
+    mutationFn: createMultipleItems,
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['productItems'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(`Successfully created ${count} product items`);
+    },
+  });
+
   return {
     productItems: productItemsQuery.data || [],
     isLoading: productItemsQuery.isLoading,
@@ -127,5 +173,6 @@ export const useProductItems = (productId?: string) => {
     createProductItem: createProductItemMutation.mutate,
     updateProductItem: updateProductItemMutation.mutate,
     deleteProductItem: deleteProductItemMutation.mutate,
+    createMultipleItems: createMultipleItemsMutation.mutate,
   };
 };
