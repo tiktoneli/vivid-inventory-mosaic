@@ -54,20 +54,34 @@ const ProductManagement = () => {
     setProductToDelete(null);
   };
 
-  const handleFormSubmit = (values: any) => {
-    if (editingProduct) {
-      // Update existing product
-      updateProduct({
-        id: editingProduct.id,
-        data: values
-      });
-    } else {
-      // Add new product
-      createProduct(values);
+  const handleFormSubmit = async (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string }) => {
+    try {
+      if (editingProduct) {
+        // Update existing product
+        await updateProduct({
+          id: editingProduct.id,
+          data: values
+        });
+      } else {
+        // Add new product
+        const result = await createProduct(values);
+        
+        // Add quick items if enabled
+        if (result && quickAdd?.enabled && quickAdd.quantity > 0) {
+          await createProductItems({ 
+            productId: result.id, 
+            locationId: quickAdd.location, 
+            quantity: quickAdd.quantity, 
+            basePrefix: result.sku 
+          });
+        }
+      }
+      
+      setIsFormOpen(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error handling product submission:', error);
     }
-    
-    setIsFormOpen(false);
-    setEditingProduct(null);
   };
 
   const handleBatchFormSubmit = async (products: ProductInput[], quickAdd: { enabled: boolean; quantity: number }) => {
@@ -79,7 +93,7 @@ const ProductManagement = () => {
         // Create the product batch
         const result = await createProduct(productData);
         
-        // TypeScript needs us to check if result exists and has an id
+        // Check if result exists and has an id
         if (result && typeof result === 'object' && 'id' in result) {
           const newProduct = result;
           createdCount++;
@@ -401,6 +415,7 @@ const ProductManagement = () => {
                 name: cat.name, 
                 attributes: cat.attributes || [] 
               }))}
+              locations={locations}
               isEditing={!!editingProduct}
             />
           </div>

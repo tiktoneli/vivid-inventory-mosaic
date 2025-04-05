@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProductItems } from '@/hooks/useProductItems';
 import { useProducts } from '@/hooks/useProducts';
@@ -15,15 +16,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProductItemForm from '../ui/ProductItemForm';
 import { toast } from 'sonner';
-import ProductItemSelectionForm from '../ui/ProductItemSelectionForm';
-import { useQuery } from '@tanstack/react-query';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Define the ProductItem type
 export interface ProductItem {
   id: string;
   product_id: string;
   sku: string;
-  serial_number: string;
+  serial_number: string | null;
   location_id: string;
   status: 'available' | 'in_use' | 'maintenance' | 'retired';
   notes?: string;
@@ -50,8 +51,8 @@ const ProductItemsPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   
-  // Use the useSingleProductQuery function instead
-  const { getProductById, useSingleProductQuery } = useProducts();
+  // Use the useSingleProductQuery function
+  const { useSingleProductQuery } = useProducts();
   const { data: product, isLoading: productLoading } = useSingleProductQuery(productId);
   
   const { 
@@ -64,18 +65,19 @@ const ProductItemsPage = () => {
   const { locations } = useLocations();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSelectionFormOpen, setIsSelectionFormOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [editingItem, setEditingItem] = useState<ProductItem | null>(null);
-  
-  // We don't need the useEffect anymore since we're using React Query
+  const [quickAddQuantity, setQuickAddQuantity] = useState(1);
+  const [quickAddLocation, setQuickAddLocation] = useState<string>(locations[0]?.id || '');
+  const [quickAddPrefix, setQuickAddPrefix] = useState('');
   
   // Filter product items based on search and filters
   const filteredItems = productItems.filter(item => {
-    const matchesSearch = item.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = item.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     const matchesLocation = locationFilter === 'all' || item.location_id === locationFilter;
     
@@ -92,6 +94,43 @@ const ProductItemsPage = () => {
     });
     
     setIsFormOpen(false);
+  };
+
+  // Handle quick add items
+  const handleQuickAdd = () => {
+    if (!productId || !quickAddLocation || quickAddQuantity < 1) {
+      toast.error('Please select a location and enter a valid quantity');
+      return;
+    }
+
+    // Create batch of items
+    const promises = [];
+    const basePrefix = quickAddPrefix || product?.sku || '';
+    
+    for (let i = 0; i < quickAddQuantity; i++) {
+      const serialNumber = basePrefix ? `${basePrefix}-${i+1}` : null;
+      
+      const newItem = {
+        product_id: productId,
+        sku: product?.sku || '',
+        serial_number: serialNumber,
+        location_id: quickAddLocation,
+        status: 'available' as const,
+        notes: 'Auto-generated batch item'
+      };
+      
+      promises.push(createProductItem(newItem));
+    }
+
+    // Handle completion
+    Promise.all(promises)
+      .then(() => {
+        toast.success(`Successfully added ${quickAddQuantity} items`);
+        setIsQuickAddOpen(false);
+      })
+      .catch(error => {
+        toast.error('Error creating items', { description: error.message });
+      });
   };
   
   const handleEditItem = (id: string) => {
@@ -127,18 +166,6 @@ const ProductItemsPage = () => {
     } else {
       handleCreateItem(values);
     }
-  };
-  
-  // When adding existing items
-  const handleSelectionFormSubmit = (selectedItems: string[]) => {
-    if (!productId || selectedItems.length === 0) {
-      return;
-    }
-    
-    // Currently this just closes the dialog, the actual implementation
-    // would need to be added to move items between products
-    toast.success(`Added ${selectedItems.length} items to this batch`);
-    setIsSelectionFormOpen(false);
   };
   
   const getLocationName = (locationId: string) => {
@@ -208,10 +235,10 @@ const ProductItemsPage = () => {
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => setIsSelectionFormOpen(true)}
+            onClick={() => setIsQuickAddOpen(true)}
             className="border-[#00859e] text-[#00859e] hover:bg-[#00859e]/10"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Existing Items
+            <Plus className="mr-2 h-4 w-4" /> Quick Add Items
           </Button>
         </div>
       </div>
@@ -295,7 +322,7 @@ const ProductItemsPage = () => {
             <TableBody>
               {filteredItems.map(item => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.serial_number}</TableCell>
+                  <TableCell className="font-medium">{item.serial_number || '-'}</TableCell>
                   <TableCell>{getLocationName(item.location_id)}</TableCell>
                   <TableCell>
                     <Badge className={`${getStatusColor(item.status)}`}>
@@ -385,23 +412,80 @@ const ProductItemsPage = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Product Item Selection Form Dialog */}
-      <Dialog open={isSelectionFormOpen} onOpenChange={setIsSelectionFormOpen}>
-        <DialogContent className="sm:max-w-[95vw] md:max-w-[700px] max-h-[90vh]">
+      {/* Quick Add Items Dialog */}
+      <Dialog open={isQuickAddOpen} onOpenChange={setIsQuickAddOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="text-[#445372]">
-              Add Existing Items
+              Quick Add Multiple Items
             </DialogTitle>
             <DialogDescription>
-              Select items from other batches to add to this batch.
+              Quickly add multiple items to "{product.name}" batch
             </DialogDescription>
           </DialogHeader>
-          <ProductItemSelectionForm 
-            onSubmit={handleSelectionFormSubmit}
-            onCancel={() => setIsSelectionFormOpen(false)}
-            isEditing={false}
-            productId={productId}
-          />
+          
+          <div className="space-y-4">
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="location">Location *</Label>
+                <Select
+                  value={quickAddLocation}
+                  onValueChange={setQuickAddLocation}
+                >
+                  <SelectTrigger id="location">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="quantity">Quantity *</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  value={quickAddQuantity}
+                  onChange={(e) => setQuickAddQuantity(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="prefix">Serial Number Prefix (Optional)</Label>
+                <Input
+                  id="prefix"
+                  placeholder="e.g. PROJ-001"
+                  value={quickAddPrefix}
+                  onChange={(e) => setQuickAddPrefix(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {quickAddPrefix ? `Example: ${quickAddPrefix}-1, ${quickAddPrefix}-2, etc.` : 'Leave empty for no serial numbers'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => setIsQuickAddOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleQuickAdd}
+                className="bg-[#00859e] hover:bg-[#00859e]/90 text-white"
+                disabled={!quickAddLocation || quickAddQuantity < 1}
+              >
+                Add {quickAddQuantity} {quickAddQuantity === 1 ? 'Item' : 'Items'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
       

@@ -121,7 +121,7 @@ export type Database = {
           location_id: string
           notes: string | null
           product_id: string
-          serial_number: string
+          serial_number: string | null
           sku: string
           status: string
           updated_at: string | null
@@ -132,7 +132,7 @@ export type Database = {
           location_id: string
           notes?: string | null
           product_id: string
-          serial_number: string
+          serial_number?: string | null
           sku: string
           status?: string
           updated_at?: string | null
@@ -143,7 +143,7 @@ export type Database = {
           location_id?: string
           notes?: string | null
           product_id?: string
-          serial_number?: string
+          serial_number?: string | null
           sku?: string
           status?: string
           updated_at?: string | null

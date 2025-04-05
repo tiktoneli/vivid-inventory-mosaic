@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Category } from '@/hooks/useCategories';
+import { Label } from '@/components/ui/label';
 
 // Define the form schema
 const productSchema = z.object({
@@ -31,9 +32,10 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   initialValues?: any;
-  onSubmit: (values: any) => void;
+  onSubmit: (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string }) => void;
   onCancel: () => void;
   categories: { id: string; name: string; attributes: string[] }[];
+  locations?: { id: string; name: string }[];
   isEditing?: boolean;
 }
 
@@ -42,6 +44,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   onCancel,
   categories,
+  locations = [],
   isEditing = false
 }) => {
   const form = useForm<ProductFormValues>({
@@ -60,8 +63,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
     },
   });
 
+  // Quick add state
+  const [quickAdd, setQuickAdd] = useState({
+    enabled: false,
+    quantity: 1,
+    location: locations.length > 0 ? locations[0].id : '',
+  });
+
   const handleSubmit = (values: ProductFormValues) => {
-    onSubmit(values);
+    onSubmit(values, quickAdd.enabled ? quickAdd : undefined);
   };
 
   // Get selected category to show relevant attributes
@@ -225,6 +235,66 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 </FormItem>
               )}
             />
+
+            {/* Quick add items feature */}
+            {!isEditing && locations.length > 0 && (
+              <div className="bg-muted/50 rounded-md p-4 space-y-2 mt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold mb-1">Quick Item Addition</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Add individual items for this batch automatically
+                    </p>
+                  </div>
+                  <Switch
+                    checked={quickAdd.enabled}
+                    onCheckedChange={(checked) => setQuickAdd(prev => ({ ...prev, enabled: checked }))}
+                  />
+                </div>
+                
+                {quickAdd.enabled && (
+                  <div className="pt-2 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="quantity" className="text-sm w-32">
+                        Items to create:
+                      </Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        className="w-24"
+                        value={quickAdd.quantity}
+                        onChange={(e) => setQuickAdd(prev => ({ 
+                          ...prev, 
+                          quantity: parseInt(e.target.value) || 1 
+                        }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="location" className="text-sm w-32">
+                        Location:
+                      </Label>
+                      <Select
+                        value={quickAdd.location}
+                        onValueChange={(value) => setQuickAdd(prev => ({ ...prev, location: value }))}
+                      >
+                        <SelectTrigger id="location" className="w-full">
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locations.map(location => (
+                            <SelectItem key={location.id} value={location.id}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="advanced" className="space-y-4 pt-4">
