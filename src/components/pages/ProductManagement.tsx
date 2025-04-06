@@ -59,10 +59,7 @@ const ProductManagement = () => {
     try {
       if (editingProduct) {
         // Update existing product
-        await updateProduct({
-          id: editingProduct.id,
-          data: values
-        });
+        await updateProduct(editingProduct.id, values);
         setIsFormOpen(false);
         setEditingProduct(null);
       } else {

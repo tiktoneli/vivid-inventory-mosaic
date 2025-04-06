@@ -226,7 +226,7 @@ export const useProducts = () => {
     return data;
   };
 
-  const updateProduct = async (id: string, product: Partial<ProductInput>): Promise<Product> => {
+  const updateProduct = async ({ id, data: product }: { id: string; data: Partial<ProductInput> }): Promise<Product> => {
     const { data, error } = await supabase
       .from('products')
       .update({ 
@@ -284,17 +284,12 @@ export const useProducts = () => {
     return data;
   };
 
-  const createProductItems = async ({
-    productId,
-    locationId,
-    quantity,
-    basePrefix = ''
-  }: {
-    productId: string;
-    locationId: string;
-    quantity: number;
-    basePrefix?: string;
-  }) => {
+  const createProductItems = async (
+    productId: string,
+    locationId: string,
+    quantity: number,
+    basePrefix: string = ''
+  ): Promise<number> => {
     let successCount = 0;
     
     for (let i = 0; i < quantity; i++) {
@@ -365,7 +360,7 @@ export const useProducts = () => {
 
   const updateProductMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ProductInput> }) => 
-      updateProduct(id, data),
+      updateProduct({id, data}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product batch updated successfully');
