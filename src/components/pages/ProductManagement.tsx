@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Plus, Download, Upload } from 'lucide-react';
+import { Plus, Download, Upload, Search } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -10,7 +9,6 @@ import { useProducts, ProductInput } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import BatchProductForm from '../ui/BatchProductForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -60,27 +58,25 @@ const ProductManagement = () => {
     try {
       if (editingProduct) {
         // Update existing product
-        await updateProduct({ id: editingProduct.id, data: values });
+        updateProduct({ id: editingProduct.id, data: values });
         setIsFormOpen(false);
         setEditingProduct(null);
       } else {
         // Add new product
-        const result = await createProduct(values);
-        
-        // Add quick items if enabled
-        if (quickAdd?.enabled && quickAdd.quantity > 0) {
-          // Only try to create items if result is successful
-          if (result) {
-            await createProductItems({ 
-              productId: result.id, 
-              locationId: quickAdd.location, 
-              quantity: quickAdd.quantity, 
-              basePrefix: result.sku 
-            });
+        createProduct(values, {
+          onSuccess: (result) => {
+            // Add quick items if enabled
+            if (quickAdd?.enabled && quickAdd.quantity > 0 && result) {
+              createProductItems({ 
+                productId: result.id, 
+                locationId: quickAdd.location, 
+                quantity: quickAdd.quantity, 
+                basePrefix: result.sku 
+              });
+            }
+            setIsFormOpen(false);
           }
-        }
-        
-        setIsFormOpen(false);
+        });
       }
     } catch (error) {
       console.error('Error handling product submission:', error);
@@ -95,22 +91,21 @@ const ProductManagement = () => {
     for (const productData of products) {
       try {
         // Create the product batch
-        const result = await createProduct(productData);
-        
-        // If product was created successfully
-        if (result) {
-          createdCount++;
-          
-          // If quick add is enabled, create the specified number of product items
-          if (quickAdd.enabled && quickAdd.quantity > 0 && locations.length > 0) {
-            await createProductItems({ 
-              productId: result.id, 
-              locationId: locations[0]?.id || '', 
-              quantity: quickAdd.quantity, 
-              basePrefix: result.sku || '' 
-            });
+        createProduct(productData, {
+          onSuccess: (result) => {
+            createdCount++;
+            
+            // If quick add is enabled, create the specified number of product items
+            if (quickAdd.enabled && quickAdd.quantity > 0 && locations.length > 0 && result) {
+              createProductItems({ 
+                productId: result.id, 
+                locationId: locations[0]?.id || '', 
+                quantity: quickAdd.quantity, 
+                basePrefix: result.sku || '' 
+              });
+            }
           }
-        }
+        });
       } catch (error) {
         console.error("Error creating product batch:", error);
       }
