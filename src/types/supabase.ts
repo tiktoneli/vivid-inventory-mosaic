@@ -39,7 +39,7 @@ export interface Database {
           updated_at?: string | null
         }
       }
-      products: {
+      batches: {
         Row: {
           id: string
           name: string
@@ -110,10 +110,10 @@ export interface Database {
           lifecycle_status?: string | null
         }
       }
-      product_items: {
+      batch_items: {
         Row: {
           id: string
-          product_id: string
+          batch_id: string
           serial_number: string
           sku: string
           location_id: string
@@ -124,7 +124,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          product_id: string
+          batch_id: string
           serial_number: string
           sku: string
           location_id: string
@@ -135,7 +135,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          product_id?: string
+          batch_id?: string
           serial_number?: string
           sku?: string
           location_id?: string
@@ -145,101 +145,90 @@ export interface Database {
           updated_at?: string | null
         }
       }
-      inventory_movements: {
+      batch_inventory: {
         Row: {
-          id: string
-          type: string
-          reference: string
-          product_id: string
-          quantity: number
-          location: string
-          username: string | null
-          notes: string | null
-          created_at: string
+          batch_name: string | null
+          location_id: string | null
+          batch_id: string | null
+          location_name: string | null
+          quantity: number | null
+          category_id: string | null
         }
         Insert: {
-          id?: string
-          type: string
-          reference: string
-          product_id: string
-          quantity: number
-          location: string
-          username?: string | null
-          notes?: string | null
-          created_at?: string
+          batch_name?: string | null
+          location_id?: string | null
+          batch_id?: string | null
+          location_name?: string | null
+          quantity?: number | null
+          category_id?: string | null
         }
         Update: {
-          id?: string
-          type?: string
-          reference?: string
-          product_id?: string
-          quantity?: number
-          location?: string
-          username?: string | null
-          notes?: string | null
-          created_at?: string
+          batch_name?: string | null
+          location_id?: string | null
+          batch_id?: string | null
+          location_name?: string | null
+          quantity?: number | null
+          category_id?: string | null
         }
       }
       locations: {
         Row: {
+          description: string | null
           id: string
           name: string
-          description: string | null
-          is_active: boolean
           created_at: string
+          is_active: boolean
         }
         Insert: {
+          description?: string | null
           id?: string
           name: string
-          description?: string | null
-          is_active?: boolean
           created_at?: string
+          is_active?: boolean
         }
         Update: {
+          description?: string | null
           id?: string
           name?: string
-          description?: string | null
-          is_active?: boolean
           created_at?: string
+          is_active?: boolean
         }
       }
-    }
-    Views: {
-      product_inventory: {
+      inventory_movements: {
         Row: {
-          product_id: string | null
-          product_name: string | null
-          category_id: string | null
-          location_id: string | null
-          location_name: string | null
-          quantity: number | null
+          created_at: string
+          location: string
+          type: string
+          reference: string
+          username: string | null
+          id: string
+          batch_id: string
+          quantity: number
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          location: string
+          type: string
+          reference: string
+          username?: string | null
+          id?: string
+          batch_id: string
+          quantity: number
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          location?: string
+          type?: string
+          reference?: string
+          username?: string | null
+          id?: string
+          batch_id?: string
+          quantity?: number
+          notes?: string | null
         }
       }
-    }
-    Functions: {
-      get_product_stock_by_location: {
-        Args: {
-          p_product_id: string
-          p_location_id: string
-        }
-        Returns: number
-      }
-      get_product_total_stock: {
-        Args: {
-          p_product_id: string
-        }
-        Returns: number
-      }
-      update_product_stock: {
-        Args: {
-          p_product_id: string
-          p_quantity: number
-        }
-        Returns: void
-      }
-    }
-    Enums: {
-      [_ in never]: never
     }
   }
 }
