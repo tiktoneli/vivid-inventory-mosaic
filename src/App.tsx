@@ -9,8 +9,9 @@ import CategoryManagement from "./components/pages/CategoryManagement";
 import LocationManagement from "./components/pages/LocationManagement";
 import InventoryControl from "./components/pages/InventoryControl";
 import { Toaster } from "@/components/ui/toaster"
-import ProductManagement from "./components/pages/ProductManagement";
-import ProductItemsPage from "./components/pages/ProductItemsPage";
+import BatchManagement from "./components/pages/BatchManagement";
+import BatchItemsPage from "./components/pages/BatchItemsPage";
+import ProductRedirect from "./components/pages/ProductRedirect";
 
 function App() {
   return (
@@ -19,8 +20,10 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="products" element={<ProductManagement />} />
-          <Route path="products/:productId/items" element={<ProductItemsPage />} />
+          <Route path="batches" element={<BatchManagement />} />
+          <Route path="batches/:batchId/items" element={<BatchItemsPage />} />
+          <Route path="products" element={<ProductRedirect />} />
+          <Route path="products/:productId/items" element={<ProductRedirect />} />
           <Route path="categories" element={<CategoryManagement />} />
           <Route path="locations" element={<LocationManagement />} />
           <Route path="inventory" element={<InventoryControl />} />

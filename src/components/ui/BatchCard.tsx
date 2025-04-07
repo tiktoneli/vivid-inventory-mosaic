@@ -38,7 +38,7 @@ const BatchCard = ({
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center">
-              <p className="text-sm font-medium line-clamp-1 text-[#445372] dark:text-white">{name}</p>
+              <p className="text-sm font-medium line-clamp-1 text-foreground dark:text-foreground">{name}</p>
               {!isActive && (
                 <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full dark:bg-red-900/30 dark:text-red-200">Inactive</span>
               )}
