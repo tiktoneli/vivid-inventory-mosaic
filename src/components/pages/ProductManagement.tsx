@@ -167,7 +167,7 @@ const ProductManagement = () => {
       <section className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight mb-1 text-[#445372]">Product Batches</h1>
+            <h1 className="text-3xl font-semibold tracking-tight mb-1 text-[#445372] dark:text-white">Product Batches</h1>
             <p className="text-muted-foreground">Manage your product batches</p>
           </div>
           <div className="flex flex-col md:flex-row gap-2">
@@ -194,9 +194,8 @@ const ProductManagement = () => {
                 <Plus className="mr-2 h-4 w-4" /> Add New Batch
               </Button>
               <Button 
-                variant="outline" 
+                className="bg-[#00859e] text-white hover:bg-[#00859e]/90"
                 onClick={() => setIsBatchFormOpen(true)}
-                className="border-[#00859e] text-[#00859e] hover:bg-[#00859e]/10"
               >
                 <Upload className="mr-2 h-4 w-4" /> Add Multiple Batches
               </Button>
@@ -306,7 +305,7 @@ const ProductManagement = () => {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
-            <DialogTitle className="text-[#445372]">
+            <DialogTitle className="text-[#445372] dark:text-white">
               {editingProduct ? 'Edit Batch' : 'Add New Batch'}
             </DialogTitle>
             <DialogDescription>
@@ -336,7 +335,7 @@ const ProductManagement = () => {
       <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
         <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
-            <DialogTitle className="text-[#445372]">Add Multiple Batches</DialogTitle>
+            <DialogTitle className="text-[#445372] dark:text-white">Add Multiple Batches</DialogTitle>
             <DialogDescription>
               Quickly add multiple product batches to inventory at once. You can fill in more details later.
             </DialogDescription>

@@ -46,40 +46,40 @@
   }
 
   .dark {
-    /* Softer dark mode with blue-blackish tones */
+    /* Improved dark mode with better contrast */
     --background: 215 28% 17%;
     --foreground: 210 20% 98%;
 
-    --card: 217 33% 20%;
+    --card: 217 33% 23%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 217 33% 20%;
+    --popover: 217 33% 23%;
     --popover-foreground: 210 20% 98%;
 
     --primary: 210 20% 98%;
     --primary-foreground: 215 28% 17%;
 
-    --secondary: 215 25% 27%;
+    --secondary: 215 25% 30%;
     --secondary-foreground: 210 20% 98%;
 
-    --muted: 215 25% 27%;
-    --muted-foreground: 217 10% 70%;
+    --muted: 215 25% 30%;
+    --muted-foreground: 217 10% 75%;
 
-    --accent: 215 25% 27%;
+    --accent: 215 25% 30%;
     --accent-foreground: 210 20% 98%;
 
-    --destructive: 0 62.8% 40.6%;
+    --destructive: 0 62.8% 60.6%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 217 20% 32%;
-    --input: 215 25% 27%;
+    --input: 215 25% 30%;
     --ring: 210 20% 75%;
 
     --sidebar-background: 215 28% 17%;
     --sidebar-foreground: 210 20% 98%;
     --sidebar-primary: 210 20% 98%;
     --sidebar-primary-foreground: 215 28% 17%;
-    --sidebar-accent: 215 25% 27%;
+    --sidebar-accent: 215 25% 30%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 217 20% 32%;
     --sidebar-ring: 210 20% 75%;

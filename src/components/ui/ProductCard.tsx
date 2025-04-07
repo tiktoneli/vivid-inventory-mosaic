@@ -38,7 +38,7 @@ const ProductCard = ({
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center">
-              <p className="text-sm font-medium line-clamp-1 text-[#445372] dark:text-brand-light">{name}</p>
+              <p className="text-sm font-medium line-clamp-1 text-[#445372] dark:text-white">{name}</p>
               {!isActive && (
                 <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full dark:bg-red-900/30 dark:text-red-200">Inactive</span>
               )}
@@ -93,13 +93,13 @@ const ProductCard = ({
           </div>
           
           <div className="flex justify-between items-center">
-            <span className={`text-xs font-medium ${isLowStock ? 'text-destructive' : 'text-[#00859e] dark:text-brand-primary'}`}>
+            <span className={`text-xs font-medium ${isLowStock ? 'text-destructive' : 'text-[#00859e] dark:text-[#4cc9e2]'}`}>
               Stock: {stock} {isLowStock && <AlertCircle className="inline h-3 w-3 ml-1" aria-label="Low stock warning" />}
             </span>
             <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${
               isLowStock 
-                ? 'bg-destructive/10 text-destructive dark:bg-destructive/20' 
-                : 'bg-[#00859e]/10 text-[#00859e] dark:bg-[#00859e]/20'
+                ? 'bg-destructive/15 text-destructive dark:bg-destructive/25 dark:text-destructive-foreground' 
+                : 'bg-[#00859e]/15 text-[#00859e] dark:bg-[#00859e]/25 dark:text-[#4cc9e2]'
             }`}>
               {isLowStock ? 'Low Stock' : 'In Stock'}
             </div>
