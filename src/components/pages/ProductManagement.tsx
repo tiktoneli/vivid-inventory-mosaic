@@ -1,20 +1,21 @@
+
 import React, { useState } from 'react';
-import { Plus, Search, Filter, ArrowUpDown, Download, Upload } from 'lucide-react';
+import { Plus, Download, Upload } from 'lucide-react';
 import ProductCard from '../ui/ProductCard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import ProductForm from '../ui/ProductForm';
 import { Link } from 'react-router-dom';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts, ProductInput } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import BatchProductForm from '../ui/BatchProductForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ProductInput } from '@/hooks/useProducts';
+import SearchAndFilter from '../ui/SearchAndFilter';
+import PaginationControl from '../ui/PaginationControl';
 
 const ProductManagement = () => {
   const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct, createProductItems } = useProducts();
@@ -59,7 +60,7 @@ const ProductManagement = () => {
     try {
       if (editingProduct) {
         // Update existing product
-        await updateProduct(editingProduct.id, values);
+        await updateProduct({ id: editingProduct.id, data: values });
         setIsFormOpen(false);
         setEditingProduct(null);
       } else {
@@ -67,13 +68,16 @@ const ProductManagement = () => {
         const result = await createProduct(values);
         
         // Add quick items if enabled
-        if (result && quickAdd?.enabled && quickAdd.quantity > 0) {
-          await createProductItems({ 
-            productId: result.id, 
-            locationId: quickAdd.location, 
-            quantity: quickAdd.quantity, 
-            basePrefix: result.sku 
-          });
+        if (quickAdd?.enabled && quickAdd.quantity > 0) {
+          // Only try to create items if result is successful
+          if (result) {
+            await createProductItems({ 
+              productId: result.id, 
+              locationId: quickAdd.location, 
+              quantity: quickAdd.quantity, 
+              basePrefix: result.sku 
+            });
+          }
         }
         
         setIsFormOpen(false);
@@ -93,7 +97,7 @@ const ProductManagement = () => {
         // Create the product batch
         const result = await createProduct(productData);
         
-        // Check if result exists and has an id
+        // If product was created successfully
         if (result) {
           createdCount++;
           
@@ -162,55 +166,6 @@ const ProductManagement = () => {
     }
   };
 
-  // Generate pagination items
-  const renderPaginationItems = () => {
-    const items = [];
-    
-    // Show first page
-    if (currentPage > 3) {
-      items.push(
-        <PaginationItem key="first">
-          <PaginationLink onClick={() => handlePageChange(1)}>1</PaginationLink>
-        </PaginationItem>
-      );
-      
-      if (currentPage > 4) {
-        items.push(<PaginationItem key="ellipsis1"><span className="px-4">...</span></PaginationItem>);
-      }
-    }
-    
-    // Show pages around current page
-    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink 
-            isActive={currentPage === i} 
-            onClick={() => handlePageChange(i)}
-          >
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    // Show last page
-    if (currentPage < totalPages - 2) {
-      if (currentPage < totalPages - 3) {
-        items.push(<PaginationItem key="ellipsis2"><span className="px-4">...</span></PaginationItem>);
-      }
-      
-      items.push(
-        <PaginationItem key="last">
-          <PaginationLink onClick={() => handlePageChange(totalPages)}>
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    return items;
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header section */}
@@ -257,42 +212,15 @@ const ProductManagement = () => {
 
       {/* Search and filter section */}
       <section className="mb-8">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search batches by name or code..."
-              className="pl-10 w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex gap-2 flex-wrap">
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryOptions.map(category => (
-                  <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10">
-              <Filter className="h-4 w-4" />
-            </button>
-            
-            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10">
-              <ArrowUpDown className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <SearchAndFilter 
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search batches by name or code..."
+          selectedFilter={selectedCategory}
+          onFilterChange={setSelectedCategory}
+          filterOptions={categoryOptions}
+          filterLabel="Select Category"
+        />
       </section>
 
       {/* Product count and export/import buttons section */}
@@ -355,26 +283,14 @@ const ProductManagement = () => {
               })}
             </div>
             
-            {/* Pagination */}
+            {/* Use the PaginationControl component */}
             {totalPages > 1 && (
               <div className="mt-8">
-                <Pagination>
-                  <PaginationContent>
-                    {currentPage > 1 && (
-                      <PaginationItem>
-                        <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
-                      </PaginationItem>
-                    )}
-                    
-                    {renderPaginationItems()}
-                    
-                    {currentPage < totalPages && (
-                      <PaginationItem>
-                        <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
-                      </PaginationItem>
-                    )}
-                  </PaginationContent>
-                </Pagination>
+                <PaginationControl
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             )}
           </>

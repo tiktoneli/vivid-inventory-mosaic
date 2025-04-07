@@ -1,12 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from './button';
 import { Input } from './input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { X, Plus, Check } from 'lucide-react';
 import { Textarea } from './textarea';
-import { Switch } from './switch';
-import { Label } from './label';
+import ProductItemCreator from './ProductItemCreator';
 
 interface BatchProductFormProps {
   onSubmit: (products: any[], quickAdd: { enabled: boolean; quantity: number }) => void;
@@ -156,39 +154,16 @@ const BatchProductForm: React.FC<BatchProductFormProps> = ({ onSubmit, onCancel,
         <Plus className="mr-2 h-4 w-4" /> Add Row
       </Button>
 
-      {/* Quick add items option - simplified UI */}
-      <div className="bg-muted/50 rounded-md p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold mb-1">Item Creation</h3>
-            <p className="text-xs text-muted-foreground">
-              Automatically add items for each batch
-            </p>
-          </div>
-        </div>
-        
-        <div className="pt-2">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="quantity" className="text-sm">
-              Items per batch:
-            </Label>
-            <Input
-              id="quantity"
-              type="number"
-              min="1"
-              className="w-24"
-              value={quickAdd.quantity}
-              onChange={(e) => setQuickAdd(prev => ({ 
-                ...prev, 
-                quantity: parseInt(e.target.value) || 1 
-              }))}
-            />
-            <p className="text-xs text-muted-foreground">
-              Each batch will get this many items at the default location
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Replace Quick Add Items with ProductItemCreator */}
+      {locations.length > 0 && (
+        <ProductItemCreator
+          quantity={quickAdd.quantity}
+          onQuantityChange={(quantity) => setQuickAdd(prev => ({ ...prev, quantity }))}
+          location={locations[0]?.id || ''}
+          onLocationChange={() => {}} // Not needed for this form as we always use the first location
+          locations={[]} // Empty array as we don't need to show the location selector here
+        />
+      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>

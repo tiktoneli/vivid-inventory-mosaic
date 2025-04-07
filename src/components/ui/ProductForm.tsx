@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -12,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Category } from '@/hooks/useCategories';
 import { Label } from '@/components/ui/label';
+import ProductItemCreator from './ProductItemCreator';
 
 // Define the form schema
 const productSchema = z.object({
@@ -65,7 +65,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   // Quick add state - enabled set to false by default to make it optional
   const [quickAdd, setQuickAdd] = useState({
-    enabled: false, // Changed from !isEditing to false to make item creation optional
+    enabled: false,
     quantity: 1,
     location: locations.length > 0 ? locations[0].id : '',
   });
@@ -235,67 +235,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />
 
-            {/* Updated Item Creation Section with optional toggle */}
+            {/* Replace Quick Add Items section with ProductItemCreator component */}
             {!isEditing && locations.length > 0 && (
-              <div className="bg-muted/50 rounded-md p-4 space-y-2 mt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">Item Creation</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Automatically create individual items for this batch
-                    </p>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={quickAdd.enabled}
-                      onCheckedChange={(checked) => setQuickAdd(prev => ({ ...prev, enabled: checked }))}
-                      aria-label="Enable item creation"
-                    />
-                  </FormControl>
-                </div>
-                
-                {quickAdd.enabled && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="quantity" className="text-sm w-32">
-                        Items to create:
-                      </Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        min="1"
-                        className="w-24"
-                        value={quickAdd.quantity}
-                        onChange={(e) => setQuickAdd(prev => ({ 
-                          ...prev, 
-                          quantity: parseInt(e.target.value) || 1 
-                        }))}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="location" className="text-sm w-32">
-                        Location:
-                      </Label>
-                      <Select
-                        value={quickAdd.location}
-                        onValueChange={(value) => setQuickAdd(prev => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger id="location" className="w-full">
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.map(location => (
-                            <SelectItem key={location.id} value={location.id}>
-                              {location.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <ProductItemCreator
+                enabled={quickAdd.enabled}
+                onEnabledChange={(enabled) => setQuickAdd(prev => ({ ...prev, enabled }))}
+                quantity={quickAdd.quantity}
+                onQuantityChange={(quantity) => setQuickAdd(prev => ({ ...prev, quantity }))}
+                location={quickAdd.location}
+                onLocationChange={(location) => setQuickAdd(prev => ({ ...prev, location }))}
+                locations={locations}
+              />
             )}
           </TabsContent>
           
