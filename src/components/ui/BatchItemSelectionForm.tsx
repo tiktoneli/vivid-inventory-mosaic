@@ -25,12 +25,14 @@ interface BatchItemSelectionFormProps {
   onSubmit: (values: FormValues) => void;
   onCancel: () => void;
   batchId?: string;
+  defaultSku?: string;
 }
 
 const BatchItemSelectionForm = ({
   onSubmit,
   onCancel,
   batchId,
+  defaultSku = '',
 }: BatchItemSelectionFormProps) => {
   const { locations, isLoading, isError } = useLocations();
 
@@ -40,8 +42,8 @@ const BatchItemSelectionForm = ({
     defaultValues: {
       quantity: 1,
       location_id: locations?.length > 0 ? locations[0].id : '',
-      prefix: '',
-      notes: ''
+      prefix: defaultSku,
+      notes: 'Auto-generated batch item'
     },
   });
 
@@ -66,7 +68,7 @@ const BatchItemSelectionForm = ({
 
   if (isError) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
         <p>Error loading locations. Please try again.</p>
       </div>
     );
@@ -82,7 +84,7 @@ const BatchItemSelectionForm = ({
               name="quantity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Number of items to create</FormLabel>
+                  <FormLabel className="dark:text-white">Number of items to create</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
@@ -101,7 +103,7 @@ const BatchItemSelectionForm = ({
               name="location_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location</FormLabel>
+                  <FormLabel className="dark:text-white">Location</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
@@ -131,7 +133,7 @@ const BatchItemSelectionForm = ({
             name="prefix"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>SKU/Serial Number Prefix (Optional)</FormLabel>
+                <FormLabel className="dark:text-white">SKU/Serial Number Prefix (Optional)</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Custom prefix for generated serial numbers" 
@@ -148,7 +150,7 @@ const BatchItemSelectionForm = ({
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes (Optional)</FormLabel>
+                <FormLabel className="dark:text-white">Notes (Optional)</FormLabel>
                 <FormControl>
                   <Textarea 
                     placeholder="Add any relevant notes for these items" 

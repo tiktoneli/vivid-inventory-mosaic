@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BatchItem } from '@/components/pages/BatchItemsPage';
 
@@ -31,14 +31,14 @@ export const useBatchItems = (batchId?: string) => {
     return data || [];
   };
 
-  const createBatchItem = async (item: BatchItemInput): Promise<BatchItem> => {
+  const createBatchItem = async (batchItem: BatchItemInput): Promise<BatchItem> => {
     const { data, error } = await supabase
       .from('batch_items')
       .insert([{ 
-        ...item, 
+        ...batchItem, 
         created_at: new Date().toISOString(),
         // Ensure serial_number is explicitly set to null if not provided
-        serial_number: item.serial_number || null
+        serial_number: batchItem.serial_number || null
       }])
       .select()
       .single();
@@ -88,7 +88,7 @@ export const useBatchItems = (batchId?: string) => {
     }
   };
 
-  // Create multiple batch items at once
+  // Create multiple batch items at once with enhanced options
   const createMultipleItems = async ({
     batchId,
     locationId,
@@ -109,7 +109,7 @@ export const useBatchItems = (batchId?: string) => {
         await createBatchItem({
           batch_id: batchId,
           sku: prefix || '',
-          // Allow null serial numbers
+          // Create serial numbers with prefixes if provided
           serial_number: prefix ? `${prefix}-${i+1}` : null,
           location_id: locationId,
           status: "available",

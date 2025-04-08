@@ -8,7 +8,7 @@ import { Textarea } from './textarea';
 import BatchItemCreator from './BatchItemCreator';
 
 interface BatchBatchFormProps {
-  onSubmit: (batches: any[], quickAdd: { enabled: boolean; quantity: number }) => void;
+  onSubmit: (batches: any[], quickAdd: { enabled: boolean; quantity: number; location: string; prefix?: string; notes?: string }) => void;
   onCancel: () => void;
   categories: any[];
   locations: any[];
@@ -25,9 +25,12 @@ const EmptyBatchRow = {
 
 const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, categories, locations }) => {
   const [batches, setBatches] = useState([{ ...EmptyBatchRow }]);
-  const [quickAdd, setQuickAdd] = useState<{ enabled: boolean; quantity: number }>({
+  const [quickAdd, setQuickAdd] = useState<{ enabled: boolean; quantity: number; location: string; prefix: string; notes: string }>({
     enabled: true, // Default to enabled for better UX
-    quantity: 1
+    quantity: 1,
+    location: locations.length > 0 ? locations[0].id : '',
+    prefix: '',
+    notes: 'Auto-generated batch item'
   });
 
   const addRow = () => {
@@ -62,18 +65,18 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
       <div className="overflow-x-auto">
         <table className="w-full min-w-[500px] border-collapse">
           <thead>
-            <tr className="border-b">
-              <th className="text-left p-2 text-sm font-medium">Batch Name *</th>
-              <th className="text-left p-2 text-sm font-medium">Batch Code *</th>
-              <th className="text-left p-2 text-sm font-medium">Category *</th>
-              <th className="text-left p-2 text-sm font-medium">Description</th>
-              <th className="text-left p-2 text-sm font-medium">Min Stock</th>
-              <th className="text-center p-2 text-sm font-medium w-10"></th>
+            <tr className="border-b dark:border-gray-700">
+              <th className="text-left p-2 text-sm font-medium dark:text-white">Batch Name *</th>
+              <th className="text-left p-2 text-sm font-medium dark:text-white">Batch Code *</th>
+              <th className="text-left p-2 text-sm font-medium dark:text-white">Category *</th>
+              <th className="text-left p-2 text-sm font-medium dark:text-white">Description</th>
+              <th className="text-left p-2 text-sm font-medium dark:text-white">Min Stock</th>
+              <th className="text-center p-2 text-sm font-medium w-10 dark:text-white"></th>
             </tr>
           </thead>
           <tbody>
             {batches.map((batch, index) => (
-              <tr key={index} className="border-b">
+              <tr key={index} className="border-b dark:border-gray-700">
                 <td className="p-2">
                   <Input
                     placeholder="Enter batch name"
@@ -155,14 +158,20 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
         <Plus className="mr-2 h-4 w-4" /> Add Row
       </Button>
 
-      {/* Replace Quick Add Items with BatchItemCreator */}
+      {/* Use updated BatchItemCreator with all options */}
       {locations.length > 0 && (
         <BatchItemCreator
+          enabled={quickAdd.enabled}
+          onEnabledChange={(enabled) => setQuickAdd(prev => ({ ...prev, enabled }))}
           quantity={quickAdd.quantity}
           onQuantityChange={(quantity) => setQuickAdd(prev => ({ ...prev, quantity }))}
-          location={locations[0]?.id || ''}
-          onLocationChange={() => {}} // Not needed for this form as we always use the first location
-          locations={[]} // Empty array as we don't need to show the location selector here
+          location={quickAdd.location}
+          onLocationChange={(location) => setQuickAdd(prev => ({ ...prev, location }))}
+          locations={locations}
+          prefix={quickAdd.prefix}
+          onPrefixChange={(prefix) => setQuickAdd(prev => ({ ...prev, prefix }))}
+          notes={quickAdd.notes}
+          onNotesChange={(notes) => setQuickAdd(prev => ({ ...prev, notes }))}
         />
       )}
 

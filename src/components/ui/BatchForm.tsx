@@ -33,7 +33,7 @@ type BatchFormValues = z.infer<typeof batchSchema>;
 
 interface BatchFormProps {
   initialValues?: any;
-  onSubmit: (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string }) => void;
+  onSubmit: (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string; prefix?: string; notes?: string }) => void;
   onCancel: () => void;
   categories: { id: string; name: string; attributes: string[] }[];
   locations?: { id: string; name: string }[];
@@ -66,9 +66,11 @@ const BatchForm: React.FC<BatchFormProps> = ({
 
   // Quick add state - enabled set to false by default to make it optional
   const [quickAdd, setQuickAdd] = useState({
-    enabled: false,
+    enabled: !isEditing && locations.length > 0,
     quantity: 1,
     location: locations.length > 0 ? locations[0].id : '',
+    prefix: '',
+    notes: 'Auto-generated batch item'
   });
 
   const handleSubmit = (values: BatchFormValues) => {
@@ -219,7 +221,7 @@ const BatchForm: React.FC<BatchFormProps> = ({
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 dark:border-gray-700">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Active Status</FormLabel>
                     <FormDescription>
@@ -236,7 +238,7 @@ const BatchForm: React.FC<BatchFormProps> = ({
               )}
             />
 
-            {/* Replace Quick Add Items section with BatchItemCreator component */}
+            {/* Enhanced BatchItemCreator with more options */}
             {!isEditing && locations.length > 0 && (
               <BatchItemCreator
                 enabled={quickAdd.enabled}
@@ -246,6 +248,10 @@ const BatchForm: React.FC<BatchFormProps> = ({
                 location={quickAdd.location}
                 onLocationChange={(location) => setQuickAdd(prev => ({ ...prev, location }))}
                 locations={locations}
+                prefix={quickAdd.prefix}
+                onPrefixChange={(prefix) => setQuickAdd(prev => ({ ...prev, prefix }))}
+                notes={quickAdd.notes}
+                onNotesChange={(notes) => setQuickAdd(prev => ({ ...prev, notes }))}
               />
             )}
           </TabsContent>
@@ -326,7 +332,7 @@ const BatchForm: React.FC<BatchFormProps> = ({
                 {/* Display category-specific attributes dynamically */}
                 {selectedCategory && selectedCategory.attributes && selectedCategory.attributes.length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Category-Specific Attributes</h3>
+                    <h3 className="text-sm font-medium dark:text-white">Category-Specific Attributes</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedCategory.attributes
                         .filter(attr => 

@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export type Batch = {
@@ -285,24 +285,31 @@ export const useBatches = () => {
     return data;
   };
 
-  const createBatchItems = async (
-    batchId: string,
-    locationId: string,
-    quantity: number,
-    basePrefix: string = ''
-  ): Promise<number> => {
+  const createBatchItems = async ({
+    batchId,
+    locationId,
+    quantity,
+    basePrefix = '',
+    notes = 'Auto-generated batch item'
+  }: {
+    batchId: string;
+    locationId: string;
+    quantity: number;
+    basePrefix?: string;
+    notes?: string;
+  }): Promise<number> => {
     let successCount = 0;
     
     for (let i = 0; i < quantity; i++) {
       try {
-        // Create basic batch item with auto-generated serial numbers
+        // Create batch item with customizable serial number prefix and notes
         await createBatchItem({
           batch_id: batchId,
           sku: basePrefix || '',
-          serial_number: basePrefix ? `${basePrefix}-${i+1}` : null, // Allow null serial numbers
+          serial_number: basePrefix ? `${basePrefix}-${i+1}` : null,
           location_id: locationId,
           status: "available",
-          notes: "Auto-generated batch item"
+          notes: notes || "Auto-generated batch item"
         });
         successCount++;
       } catch (error) {
@@ -386,12 +393,7 @@ export const useBatches = () => {
   });
 
   const createBatchItemsMutation = useMutation({
-    mutationFn: ({ batchId, locationId, quantity, basePrefix }: { 
-      batchId: string; 
-      locationId: string; 
-      quantity: number; 
-      basePrefix?: string 
-    }) => createBatchItems(batchId, locationId, quantity, basePrefix),
+    mutationFn: createBatchItems,
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ['batches'] });
       queryClient.invalidateQueries({ queryKey: ['batchItems'] });
@@ -404,7 +406,7 @@ export const useBatches = () => {
     isLoading: batchesQuery.isLoading,
     isError: batchesQuery.isError,
     error: batchesQuery.error,
-    createBatch: createBatchMutation.mutate,
+    createBatch: createBatchMutation.mutateAsync, // Using mutateAsync to get the returned batch
     updateBatch: updateBatchMutation.mutate,
     deleteBatch: deleteBatchMutation.mutate,
     createBatchItem: createBatchItemMutation.mutate,

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Download, Upload, Search } from 'lucide-react';
 import BatchCard from '../ui/BatchCard';
@@ -63,20 +64,18 @@ const BatchManagement = () => {
         setEditingBatch(null);
       } else {
         // Add new batch
-        createBatch(values, {
-          onSuccess: (result) => {
-            // Add quick items if enabled
-            if (quickAdd?.enabled && quickAdd.quantity > 0 && result) {
-              createBatchItems({ 
-                batchId: result.id, 
-                locationId: quickAdd.location, 
-                quantity: quickAdd.quantity, 
-                basePrefix: result.sku 
-              });
-            }
-            setIsFormOpen(false);
-          }
-        });
+        const result = await createBatch(values);
+        
+        // Add quick items if enabled
+        if (quickAdd?.enabled && quickAdd.quantity > 0 && result) {
+          createBatchItems({ 
+            batchId: result.id, 
+            locationId: quickAdd.location, 
+            quantity: quickAdd.quantity, 
+            basePrefix: result.sku 
+          });
+        }
+        setIsFormOpen(false);
       }
     } catch (error) {
       console.error('Error handling batch submission:', error);
@@ -84,28 +83,25 @@ const BatchManagement = () => {
   };
 
   // Fixed promise handling in handleBatchFormSubmit
-  const handleBatchFormSubmit = async (batches: BatchInput[], quickAdd: { enabled: boolean; quantity: number }) => {
+  const handleBatchFormSubmit = async (batches: BatchInput[], quickAdd: { enabled: boolean; quantity: number; location: string }) => {
     let createdCount = 0;
     
     // Process each batch in the batch
     for (const batchData of batches) {
       try {
         // Create the batch
-        createBatch(batchData, {
-          onSuccess: (result) => {
-            createdCount++;
-            
-            // If quick add is enabled, create the specified number of batch items
-            if (quickAdd.enabled && quickAdd.quantity > 0 && locations.length > 0 && result) {
-              createBatchItems({ 
-                batchId: result.id, 
-                locationId: locations[0]?.id || '', 
-                quantity: quickAdd.quantity, 
-                basePrefix: result.sku || '' 
-              });
-            }
-          }
-        });
+        const result = await createBatch(batchData);
+        createdCount++;
+        
+        // If quick add is enabled, create the specified number of batch items
+        if (quickAdd.enabled && quickAdd.quantity > 0 && result) {
+          createBatchItems({ 
+            batchId: result.id, 
+            locationId: quickAdd.location, 
+            quantity: quickAdd.quantity, 
+            basePrefix: result.sku || '' 
+          });
+        }
       } catch (error) {
         console.error("Error creating batch:", error);
       }
@@ -168,7 +164,7 @@ const BatchManagement = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight mb-1 text-[#445372] dark:text-white">Batches</h1>
-            <p className="text-muted-foreground">Manage your batches</p>
+            <p className="text-muted-foreground dark:text-gray-300">Manage your batches</p>
           </div>
           <div className="flex flex-col md:flex-row gap-2">
             <Link
@@ -221,25 +217,25 @@ const BatchManagement = () => {
       <section className="mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
           <div className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium text-foreground">{currentBatches.length}</span> of {filteredBatches.length} batches
+            <p className="text-sm text-muted-foreground dark:text-gray-300">
+              Showing <span className="font-medium text-foreground dark:text-white">{currentBatches.length}</span> of {filteredBatches.length} batches
             </p>
-            <label className="flex items-center gap-1 text-sm">
+            <label className="flex items-center gap-1 text-sm dark:text-gray-300">
               <input 
                 type="checkbox" 
                 checked={showInactiveBatches}
                 onChange={(e) => setShowInactiveBatches(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-[#00859e] focus:ring-[#00859e]"
+                className="h-4 w-4 rounded border-gray-300 text-[#00859e] focus:ring-[#00859e] dark:border-gray-600"
               />
               Show inactive
             </label>
           </div>
           
           <div className="flex gap-2">
-            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 dark:text-white">
               <Download className="mr-2 h-4 w-4" /> Export
             </button>
-            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+            <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 dark:text-white">
               <Upload className="mr-2 h-4 w-4" /> Import
             </button>
           </div>
@@ -250,7 +246,7 @@ const BatchManagement = () => {
       <section>
         {batchesLoading ? (
           <div className="flex justify-center items-center py-12">
-            <p>Loading batches...</p>
+            <p className="dark:text-white">Loading batches...</p>
           </div>
         ) : currentBatches.length > 0 ? (
           <>
@@ -293,8 +289,8 @@ const BatchManagement = () => {
             <div className="p-3 bg-secondary rounded-full mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-1">No batches found</h3>
-            <p className="text-muted-foreground text-sm max-w-md">
+            <h3 className="text-lg font-medium mb-1 dark:text-white">No batches found</h3>
+            <p className="text-muted-foreground text-sm max-w-md dark:text-gray-300">
               We couldn't find any batches matching your search criteria. Try adjusting your filters or search term.
             </p>
           </div>
@@ -355,7 +351,7 @@ const BatchManagement = () => {
       <AlertDialog open={!!batchToDelete} onOpenChange={(open) => !open && setBatchToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[#445372]">
+            <AlertDialogTitle className="text-[#445372] dark:text-white">
               {batches.find(p => p.id === batchToDelete)?.is_active 
                 ? 'Deactivate Batch' 
                 : 'Permanently Delete Batch'}

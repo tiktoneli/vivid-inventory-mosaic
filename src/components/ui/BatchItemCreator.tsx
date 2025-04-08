@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface BatchItemCreatorProps {
   enabled?: boolean;
@@ -13,6 +14,10 @@ interface BatchItemCreatorProps {
   location: string;
   onLocationChange: (locationId: string) => void;
   locations: { id: string; name: string }[];
+  prefix?: string;
+  onPrefixChange?: (prefix: string) => void;
+  notes?: string;
+  onNotesChange?: (notes: string) => void;
 }
 
 const BatchItemCreator: React.FC<BatchItemCreatorProps> = ({
@@ -22,7 +27,11 @@ const BatchItemCreator: React.FC<BatchItemCreatorProps> = ({
   onQuantityChange,
   location,
   onLocationChange,
-  locations = []
+  locations = [],
+  prefix = '',
+  onPrefixChange,
+  notes = '',
+  onNotesChange
 }) => {
   if (locations.length === 0) {
     return null;
@@ -82,6 +91,37 @@ const BatchItemCreator: React.FC<BatchItemCreatorProps> = ({
               </SelectContent>
             </Select>
           </div>
+
+          {onPrefixChange && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="prefix" className="text-sm w-32 dark:text-white">
+                SKU/Serial Prefix:
+              </Label>
+              <Input
+                id="prefix"
+                type="text"
+                className="w-full"
+                value={prefix}
+                onChange={(e) => onPrefixChange(e.target.value)}
+                placeholder="Optional prefix for serial numbers"
+              />
+            </div>
+          )}
+
+          {onNotesChange && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="notes" className="text-sm w-32 dark:text-white">
+                Notes:
+              </Label>
+              <Textarea
+                id="notes"
+                className="w-full h-20 min-h-20"
+                value={notes}
+                onChange={(e) => onNotesChange(e.target.value)}
+                placeholder="Optional notes for all created items"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

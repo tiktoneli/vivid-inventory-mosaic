@@ -1,198 +1,134 @@
 
 import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useBatchItems } from '@/hooks/useBatchItems';
-import { useBatches } from '@/hooks/useBatches';
-import { useLocations } from '@/hooks/useLocations';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from "@/components/ui/table";
+import { useParams, Link } from 'react-router-dom';
+import { PlusCircle, ArrowLeft, Filter, Download, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useBatches } from '@/hooks/useBatches';
+import { useBatchItems } from '@/hooks/useBatchItems';
+import { useLocations } from '@/hooks/useLocations';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronLeft, Search, ArrowUpDown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import BatchItemSelectionForm from '../ui/BatchItemSelectionForm';
 import BatchItemForm from '../ui/BatchItemForm';
-import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import SearchAndFilter from '../ui/SearchAndFilter';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import PaginationControl from '../ui/PaginationControl';
 
-// Define the BatchItem type
-export interface BatchItem {
+export type BatchItem = {
   id: string;
   batch_id: string;
-  sku: string;
   serial_number: string | null;
+  sku: string;
   location_id: string;
-  status: 'available' | 'in_use' | 'maintenance' | 'retired';
-  notes?: string;
+  status: "available" | "in_use" | "maintenance" | "retired";
+  notes: string | null;
   created_at: string;
-  updated_at?: string;
-}
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'available':
-      return 'bg-green-100 text-green-800';
-    case 'in_use':
-      return 'bg-blue-100 text-blue-800';
-    case 'maintenance':
-      return 'bg-amber-100 text-amber-800';
-    case 'retired':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
+  updated_at: string | null;
 };
 
 const BatchItemsPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
-  const navigate = useNavigate();
-  
-  // Use the useSingleBatchQuery function
   const { useSingleBatchQuery } = useBatches();
-  const { data: batch, isLoading: batchLoading } = useSingleBatchQuery(batchId);
-  
-  const { 
-    batchItems, 
-    isLoading: itemsLoading, 
-    createBatchItem,
-    updateBatchItem,
-    deleteBatchItem
-  } = useBatchItems(batchId);
+  const { data: batch, isLoading: batchLoading, isError: batchError } = useSingleBatchQuery(batchId);
+  const { batchItems, isLoading: itemsLoading, createMultipleItems, updateBatchItem, deleteBatchItem } = useBatchItems(batchId);
   const { locations } = useLocations();
   
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  // State for UI controls
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [isQuickAddDialogOpen, setIsQuickAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState<BatchItem | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [locationFilter, setLocationFilter] = useState('all');
-  const [editingItem, setEditingItem] = useState<BatchItem | null>(null);
-  const [quickAddQuantity, setQuickAddQuantity] = useState(1);
-  const [quickAddLocation, setQuickAddLocation] = useState<string>(locations[0]?.id || '');
-  const [quickAddPrefix, setQuickAddPrefix] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 24;
   
-  // Filter batch items based on search and filters
-  const filteredItems = batchItems.filter(item => {
-    const matchesSearch = item.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    const matchesLocation = locationFilter === 'all' || item.location_id === locationFilter;
-    
-    return matchesSearch && matchesStatus && matchesLocation;
-  });
+  // Create a filtered items list based on search and filters
+  const filteredItems = batchItems
+    .filter(item => 
+      (item.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+       item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       item.notes?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (selectedLocation === 'All' || item.location_id === selectedLocation)
+    );
   
-  const handleCreateItem = (values: any) => {
+  // Pagination logic
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const currentItems = filteredItems.slice(
+    (currentPage - 1) * itemsPerPage, 
+    currentPage * itemsPerPage
+  );
+
+  // Handle creating multiple items
+  const handleAddItems = (formData: { 
+    quantity: number, 
+    location_id: string,
+    prefix?: string,
+    notes?: string
+  }) => {
     if (!batchId) return;
     
-    createBatchItem({
-      ...values,
-      batch_id: batchId,
-      sku: batch?.sku || '',
+    createMultipleItems({
+      batchId,
+      locationId: formData.location_id,
+      quantity: formData.quantity,
+      prefix: formData.prefix || batch?.sku || '',
+      notes: formData.notes || ''
     });
     
-    setIsFormOpen(false);
-  };
-
-  // Handle quick add items
-  const handleQuickAdd = () => {
-    if (!batchId || !quickAddLocation || quickAddQuantity < 1) {
-      toast.error('Please select a location and enter a valid quantity');
-      return;
-    }
-
-    // Create batch of items
-    const promises = [];
-    const basePrefix = quickAddPrefix || batch?.sku || '';
-    
-    for (let i = 0; i < quickAddQuantity; i++) {
-      const serialNumber = basePrefix ? `${basePrefix}-${i+1}` : null;
-      
-      const newItem = {
-        batch_id: batchId,
-        sku: batch?.sku || '',
-        serial_number: serialNumber,
-        location_id: quickAddLocation,
-        status: 'available' as const,
-        notes: 'Auto-generated batch item'
-      };
-      
-      promises.push(createBatchItem(newItem));
-    }
-
-    // Handle completion
-    Promise.all(promises)
-      .then(() => {
-        toast.success(`Successfully added ${quickAddQuantity} items`);
-        setIsQuickAddOpen(false);
-      })
-      .catch(error => {
-        toast.error('Error creating items', { description: error.message });
-      });
+    setIsQuickAddDialogOpen(false);
   };
   
-  const handleEditItem = (id: string) => {
-    const item = batchItems.find(i => i.id === id);
-    if (item) {
-      setEditingItem(item);
-      setIsFormOpen(true);
+  // Handle editing an item
+  const handleEditItem = (item: BatchItem) => {
+    setCurrentItem(item);
+    setIsEditDialogOpen(true);
+  };
+  
+  // Handle deleting an item
+  const handleDeleteItem = (item: BatchItem) => {
+    setCurrentItem(item);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Confirm item deletion
+  const confirmDeleteItem = () => {
+    if (currentItem) {
+      deleteBatchItem(currentItem.id);
+      setIsDeleteDialogOpen(false);
     }
   };
   
-  const handleUpdateItem = (values: any) => {
-    if (!editingItem) return;
-    
-    updateBatchItem({
-      id: editingItem.id,
-      data: values
-    });
-    
-    setIsFormOpen(false);
-    setEditingItem(null);
-  };
-  
-  const confirmDelete = () => {
-    if (!itemToDelete) return;
-    
-    deleteBatchItem(itemToDelete);
-    setItemToDelete(null);
-  };
-  
-  const handleFormSubmit = (values: any) => {
-    if (editingItem) {
-      handleUpdateItem(values);
-    } else {
-      handleCreateItem(values);
-    }
-  };
-  
+  // Get location name by id
   const getLocationName = (locationId: string) => {
     const location = locations.find(loc => loc.id === locationId);
     return location ? location.name : 'Unknown';
   };
   
-  if (batchLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00859e] mx-auto mb-4"></div>
-          <p>Loading batch information...</p>
-        </div>
-      </div>
-    );
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  // Loading state
+  if (batchLoading || itemsLoading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
   
-  if (!batch) {
+  // Error state
+  if (batchError || !batch) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="p-6 bg-red-50 border border-red-200 rounded-md">
-          <h2 className="text-xl font-medium mb-2 text-red-800">Batch not found</h2>
-          <p className="mb-4">The requested batch does not exist or you don't have access to it.</p>
-          <Button onClick={() => navigate('/batches')}>
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Batches
-          </Button>
+      <div className="container mx-auto p-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+          <h2 className="font-medium">Error Loading Batch</h2>
+          <p>Could not load the requested batch. Please try again.</p>
+          <Link to="/batches" className="text-blue-500 hover:underline mt-2 inline-block">
+            &larr; Back to Batches
+          </Link>
         </div>
       </div>
     );
@@ -200,311 +136,234 @@ const BatchItemsPage = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link 
-              to="/batches" 
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center"
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Link to="/batches" className="text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4 inline mr-1" />
+            Back to Batches
+          </Link>
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-[#445372] dark:text-white">{batch.name}</h1>
+            <p className="text-muted-foreground">
+              <span className="font-medium">Code:</span> {batch.sku} | 
+              <span className="font-medium ml-2">Category:</span> {batch.categories?.name}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddItemDialogOpen(true)}
+              className="whitespace-nowrap"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back to Batches
-            </Link>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsQuickAddDialogOpen(true)}
+              className="whitespace-nowrap bg-[#00859e]/10 border-[#00859e]/20 hover:bg-[#00859e]/20"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Quick Add Items
+            </Button>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-[#445372]">
-            {batch.name}
-          </h1>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <Badge variant="outline" className="bg-primary/10">
-              Code: {batch.sku}
-            </Badge>
-            <Badge variant="outline" className="bg-primary/10">
-              Category: {batch.categories?.name || "Uncategorized"}
-            </Badge>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => {
-              setEditingItem(null);
-              setIsFormOpen(true);
-            }}
-            className="bg-[#00859e] hover:bg-[#00859e]/90"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Item
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsQuickAddOpen(true)}
-            className="border-[#00859e] text-[#00859e] hover:bg-[#00859e]/10"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Quick Add Items
-          </Button>
         </div>
       </div>
       
-      {/* Filters section */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search by serial number..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* Filters and controls */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <div className="w-full sm:w-auto">
+            <SearchAndFilter
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search by serial or SKU..."
+              selectedFilter={selectedLocation}
+              onFilterChange={setSelectedLocation}
+              filterOptions={[
+                { id: 'All', name: 'All Locations' },
+                ...locations.map(loc => ({ id: loc.id, name: loc.name }))
+              ]}
+              filterLabel="Location"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="whitespace-nowrap">
+              <Download className="mr-1 h-4 w-4" /> Export
+            </Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap">
+              <Filter className="mr-1 h-4 w-4" /> More Filters
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="in_use">In Use</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
-              <SelectItem value="retired">Retired</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={locationFilter}
-            onValueChange={setLocationFilter}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Location" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(location => (
-                <SelectItem key={location.id} value={location.id}>
-                  {location.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" className="h-10 w-10">
-            <ArrowUpDown className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      
-      {/* Items count */}
-      <div className="mb-4">
+        
+        {/* Item count indicator */}
         <p className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{filteredItems.length}</span> of {batchItems.length} items
+          Showing {currentItems.length} of {filteredItems.length} items
+          {searchTerm && ` matching "${searchTerm}"`}
         </p>
       </div>
       
-      {/* Items table */}
-      {itemsLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00859e] mx-auto mb-4"></div>
-            <p>Loading items...</p>
-          </div>
-        </div>
-      ) : filteredItems.length > 0 ? (
-        <div className="border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Serial Number</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map(item => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.serial_number || '-'}</TableCell>
-                  <TableCell>{getLocationName(item.location_id)}</TableCell>
-                  <TableCell>
-                    <Badge className={`${getStatusColor(item.status)}`}>
+      {/* Items display */}
+      <div className="mb-6">
+        {currentItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {currentItems.map((item) => (
+              <Card key={item.id} className="overflow-hidden">
+                <CardHeader className="p-4 pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-base truncate">
+                        {item.serial_number || "No Serial"}
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        SKU: {item.sku}
+                      </CardDescription>
+                    </div>
+                    <Badge 
+                      className={
+                        item.status === 'available' ? 'bg-green-500' :
+                        item.status === 'in_use' ? 'bg-blue-500' :
+                        item.status === 'maintenance' ? 'bg-amber-500' :
+                        'bg-red-500'
+                      }
+                    >
                       {item.status.replace('_', ' ')}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {item.notes || '-'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditItem(item.id)}
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-500 border-red-200 hover:bg-red-50"
-                        onClick={() => setItemToDelete(item.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-md border">
-          <div className="p-3 bg-secondary rounded-full mb-4">
-            <Search className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-2">
+                  <p className="text-sm mb-2">
+                    <span className="font-medium">Location:</span> {getLocationName(item.location_id)}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {item.notes || "No notes"}
+                  </p>
+                </CardContent>
+                <CardFooter className="p-2 bg-muted/50 flex justify-end gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditItem(item)}
+                  >
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => handleDeleteItem(item)}
+                  >
+                    Delete
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
-          <h3 className="text-lg font-medium mb-1">No items found</h3>
-          <p className="text-muted-foreground text-sm max-w-md mb-4">
-            {batchItems.length > 0 
-              ? "No items match your filter criteria. Try adjusting your filters." 
-              : "This batch doesn't have any items yet. Add items to track individual units."}
-          </p>
-          <Button 
-            onClick={() => {
-              setEditingItem(null);
-              setIsFormOpen(true);
-            }}
-            className="bg-[#00859e] hover:bg-[#00859e]/90"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Item
-          </Button>
+        ) : (
+          <div className="flex flex-col items-center justify-center bg-muted/30 rounded-lg p-8 text-center">
+            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <PlusCircle className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-1">No Items Found</h3>
+            <p className="text-muted-foreground max-w-sm mb-4">
+              {searchTerm ? 
+                "No items match your search criteria. Try adjusting your filters." :
+                `This batch doesn't have any items yet. Add your first item to start tracking inventory.`}
+            </p>
+            {!searchTerm && (
+              <Button 
+                onClick={() => setIsQuickAddDialogOpen(true)}
+                className="bg-[#00859e] hover:bg-[#00859e]/90"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Items
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <PaginationControl
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
       
-      {/* Item Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+      {/* Add Single Item Dialog */}
+      <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle className="text-[#445372]">
-              {editingItem ? 'Edit Item' : 'Add New Item'}
-            </DialogTitle>
+            <DialogTitle>Add New Item</DialogTitle>
             <DialogDescription>
-              {editingItem 
-                ? 'Update the item information below.' 
-                : `Add a new item to the "${batch.name}" batch.`}
+              Add a single item to this batch with custom information.
             </DialogDescription>
           </DialogHeader>
-          <BatchItemForm 
-            initialValues={editingItem || {
-              batch_id: batchId,
-              serial_number: '',
-              sku: batch.sku,
-              location_id: '',
-              status: 'available',
-              notes: ''
-            }}
-            onSubmit={handleFormSubmit}
-            onCancel={() => {
-              setIsFormOpen(false);
-              setEditingItem(null);
-            }}
+          <BatchItemForm
+            batchId={batchId || ''}
+            onCancel={() => setIsAddItemDialogOpen(false)}
             locations={locations}
-            isEditing={!!editingItem}
           />
         </DialogContent>
       </Dialog>
       
       {/* Quick Add Items Dialog */}
-      <Dialog open={isQuickAddOpen} onOpenChange={setIsQuickAddOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+      <Dialog open={isQuickAddDialogOpen} onOpenChange={setIsQuickAddDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle className="text-[#445372]">
-              Quick Add Multiple Items
-            </DialogTitle>
+            <DialogTitle>Quick Add Items</DialogTitle>
             <DialogDescription>
-              Quickly add multiple items to "{batch.name}" batch
+              Quickly add multiple identical items to this batch.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="location">Location *</Label>
-                <Select
-                  value={quickAddLocation}
-                  onValueChange={setQuickAddLocation}
-                >
-                  <SelectTrigger id="location">
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="quantity">Quantity *</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  value={quickAddQuantity}
-                  onChange={(e) => setQuickAddQuantity(parseInt(e.target.value) || 1)}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="prefix">Serial Number Prefix (Optional)</Label>
-                <Input
-                  id="prefix"
-                  placeholder="e.g. PROJ-001"
-                  value={quickAddPrefix}
-                  onChange={(e) => setQuickAddPrefix(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {quickAddPrefix ? `Example: ${quickAddPrefix}-1, ${quickAddPrefix}-2, etc.` : 'Leave empty for no serial numbers'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => setIsQuickAddOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleQuickAdd}
-                className="bg-[#00859e] hover:bg-[#00859e]/90 text-white"
-                disabled={!quickAddLocation || quickAddQuantity < 1}
-              >
-                Add {quickAddQuantity} {quickAddQuantity === 1 ? 'Item' : 'Items'}
-              </Button>
-            </div>
-          </div>
+          <BatchItemSelectionForm
+            batchId={batchId || ''}
+            onSubmit={handleAddItems}
+            onCancel={() => setIsQuickAddDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+      {/* Edit Item Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Edit Item</DialogTitle>
+            <DialogDescription>
+              Update information for this item.
+            </DialogDescription>
+          </DialogHeader>
+          {currentItem && (
+            <BatchItemForm
+              batchId={batchId || ''}
+              item={currentItem}
+              onCancel={() => setIsEditDialogOpen(false)}
+              locations={locations}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[#445372]">
-              Delete Item
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete Item?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this item from the batch. This action cannot be undone.
+              This action cannot be undone. This will permanently delete the 
+              item with serial {currentItem?.serial_number || 'Unknown'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={confirmDeleteItem}
+              className="bg-red-500 hover:bg-red-600"
             >
               Delete
             </AlertDialogAction>
