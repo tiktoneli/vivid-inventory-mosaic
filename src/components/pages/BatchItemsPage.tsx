@@ -15,6 +15,7 @@ import BatchItemForm from '../ui/BatchItemForm';
 import SearchAndFilter from '../ui/SearchAndFilter';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import PaginationControl from '../ui/PaginationControl';
+import { useSingleBatch } from '@/hooks/useSingleBatch';
 
 export type BatchItem = {
   id: string;
@@ -30,8 +31,7 @@ export type BatchItem = {
 
 const BatchItemsPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
-  const { useSingleBatchQuery } = useBatches();
-  const { data: batch, isLoading: batchLoading, isError: batchError } = useSingleBatchQuery(batchId);
+  const { data: batch, isLoading: batchLoading, isError: batchError } = useSingleBatch(batchId);
   const { batchItems, isLoading: itemsLoading, createMultipleItems, updateBatchItem, deleteBatchItem } = useBatchItems(batchId);
   const { locations } = useLocations();
   
