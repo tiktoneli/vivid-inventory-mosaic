@@ -9,35 +9,140 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      batch_items: {
+      categories: {
         Row: {
-          batch_id: string
+          attributes: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          attributes?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          attributes?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          id: string
+          location: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          reference: string
+          type: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          reference: string
+          type: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          reference?: string
+          type?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_inventory"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      product_items: {
+        Row: {
           created_at: string
           id: string
           location_id: string
           notes: string | null
+          product_id: string
           serial_number: string | null
           sku: string
           status: string
           updated_at: string | null
         }
         Insert: {
-          batch_id: string
           created_at?: string
           id?: string
           location_id: string
           notes?: string | null
+          product_id: string
           serial_number?: string | null
           sku: string
           status?: string
           updated_at?: string | null
         }
         Update: {
-          batch_id?: string
           created_at?: string
           id?: string
           location_id?: string
           notes?: string | null
+          product_id?: string
           serial_number?: string | null
           sku?: string
           status?: string
@@ -60,28 +165,21 @@ export type Database = {
           },
           {
             foreignKeyName: "product_items_product_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "batch_inventory"
-            referencedColumns: ["batch_id"]
-          },
-          {
-            foreignKeyName: "product_items_product_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "batches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_items_product_id_fkey"
-            columns: ["batch_id"]
+            columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "product_inventory"
             referencedColumns: ["product_id"]
           },
+          {
+            foreignKeyName: "product_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      batches: {
+      products: {
         Row: {
           batch_code: string | null
           category_id: string
@@ -161,153 +259,8 @@ export type Database = {
           },
         ]
       }
-      categories: {
-        Row: {
-          attributes: string[] | null
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          attributes?: string[] | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          attributes?: string[] | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      inventory_movements: {
-        Row: {
-          batch_id: string
-          created_at: string
-          id: string
-          location: string
-          notes: string | null
-          quantity: number
-          reference: string
-          type: string
-          username: string | null
-        }
-        Insert: {
-          batch_id: string
-          created_at?: string
-          id?: string
-          location: string
-          notes?: string | null
-          quantity: number
-          reference: string
-          type: string
-          username?: string | null
-        }
-        Update: {
-          batch_id?: string
-          created_at?: string
-          id?: string
-          location?: string
-          notes?: string | null
-          quantity?: number
-          reference?: string
-          type?: string
-          username?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inventory_movements_product_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "batch_inventory"
-            referencedColumns: ["batch_id"]
-          },
-          {
-            foreignKeyName: "inventory_movements_product_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "batches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_movements_product_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "product_inventory"
-            referencedColumns: ["product_id"]
-          },
-        ]
-      }
-      locations: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
-      batch_inventory: {
-        Row: {
-          batch_id: string | null
-          batch_name: string | null
-          category_id: string | null
-          location_id: string | null
-          location_name: string | null
-          quantity: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_items_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_items_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "product_inventory"
-            referencedColumns: ["location_id"]
-          },
-          {
-            foreignKeyName: "products_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       product_inventory: {
         Row: {
           category_id: string | null
@@ -329,14 +282,6 @@ export type Database = {
       }
     }
     Functions: {
-      get_batch_stock_by_location: {
-        Args: { p_batch_id: string; p_location_id: string }
-        Returns: number
-      }
-      get_batch_total_stock: {
-        Args: { p_batch_id: string }
-        Returns: number
-      }
       get_product_stock_by_location: {
         Args: { p_product_id: string; p_location_id: string }
         Returns: number
@@ -344,10 +289,6 @@ export type Database = {
       get_product_total_stock: {
         Args: { p_product_id: string }
         Returns: number
-      }
-      update_batch_stock: {
-        Args: { p_batch_id: string; p_quantity: number }
-        Returns: undefined
       }
       update_product_stock: {
         Args: { p_product_id: string; p_quantity: number }

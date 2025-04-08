@@ -29,10 +29,10 @@ const BatchItemCreator: React.FC<BatchItemCreatorProps> = ({
   }
 
   return (
-    <div className="bg-muted/50 dark:bg-muted/20 rounded-md p-4 space-y-2 mt-6">
+    <div className="bg-muted/50 rounded-md p-4 space-y-2 mt-6">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="text-sm font-semibold text-foreground">Item Creation</h3>
+          <h3 className="text-sm font-semibold">Item Creation</h3>
           <p className="text-xs text-muted-foreground">
             Automatically create individual items for this batch
           </p>
@@ -49,7 +49,7 @@ const BatchItemCreator: React.FC<BatchItemCreatorProps> = ({
       {(!onEnabledChange || enabled) && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Label htmlFor="quantity" className="text-sm w-32 text-foreground">
+            <Label htmlFor="quantity" className="text-sm w-32">
               Items to create:
             </Label>
             <Input
@@ -63,7 +63,7 @@ const BatchItemCreator: React.FC<BatchItemCreatorProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <Label htmlFor="location" className="text-sm w-32 text-foreground">
+            <Label htmlFor="location" className="text-sm w-32">
               Location:
             </Label>
             <Select
