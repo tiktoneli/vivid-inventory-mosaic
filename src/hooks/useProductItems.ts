@@ -1,7 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ProductItem } from '@/components/pages/ProductItemsPage';
+
+// Define the ProductItem type directly here instead of importing it
+export type ProductItem = {
+  id: string;
+  product_id: string;
+  serial_number: string | null;
+  sku: string;
+  location_id: string;
+  status: "available" | "in_use" | "maintenance" | "retired";
+  notes: string | null;
+  created_at: string;
+  updated_at: string | null;
+};
 
 export type ProductItemInput = Omit<ProductItem, 'id' | 'created_at' | 'updated_at'>;
 
@@ -27,7 +39,11 @@ export const useProductItems = (productId?: string) => {
       throw error;
     }
 
-    return data || [];
+    // Cast the returned data to ensure it matches our type
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as "available" | "in_use" | "maintenance" | "retired"
+    }));
   };
 
   const createProductItem = async (item: ProductItemInput): Promise<ProductItem> => {

@@ -36,6 +36,15 @@ export const useBatchItems = (batchId?: string) => {
   };
 
   const createBatchItem = async (batchItem: BatchItemInput): Promise<BatchItem> => {
+    // Ensure all required fields are present
+    if (!batchItem.sku) {
+      const error = new Error("SKU is required for batch items");
+      toast.error('Failed to create batch item', {
+        description: error.message,
+      });
+      throw error;
+    }
+
     const { data, error } = await supabase
       .from('batch_items')
       .insert([{ 

@@ -65,7 +65,11 @@ const BatchItemForm = ({
       } else {
         createBatchItem({
           batch_id: batchId,
-          ...values,
+          sku: values.sku, // Ensure sku is explicitly passed
+          serial_number: values.serial_number,
+          location_id: values.location_id,
+          status: values.status,
+          notes: values.notes || null,
         });
       }
       onCancel();
