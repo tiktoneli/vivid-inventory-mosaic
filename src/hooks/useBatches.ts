@@ -9,7 +9,6 @@ export type Batch = {
   sku: string;
   description: string | null;
   category_id: string;
-  location: string;
   min_stock: number;
   price: number | null;
   is_active: boolean;
@@ -25,9 +24,11 @@ export type Batch = {
   compatibility_info: string | null;
   power_consumption: string | null;
   lifecycle_status: string | null;
+  batch_code?: string | null; // Make this optional
+  location?: string; // Make this optional since we're using locations array instead
 };
 
-export type BatchWithCategory = Batch & {
+export type BatchWithCategory = Omit<Batch, 'location'> & {
   categories: {
     name: string;
   };
@@ -115,11 +116,13 @@ export const useBatches = () => {
       }
     }
     
-    return {
+    const batchWithCategory: BatchWithCategory = {
       ...data,
       stock: stockData || 0,
       locations: locationNames
     };
+    
+    return batchWithCategory;
   };
 
   // Create a query for a single batch
@@ -161,7 +164,7 @@ export const useBatches = () => {
 
         if (stockError) {
           console.error('Error fetching stock data:', stockError);
-          return { ...batch, stock: 0, locations: [] };
+          return { ...batch, stock: 0, locations: [] } as BatchWithCategory;
         }
 
         // Get item locations
@@ -176,7 +179,7 @@ export const useBatches = () => {
             ...batch, 
             stock: stockData || 0,
             locations: []
-          };
+          } as BatchWithCategory;
         }
         
         // Get unique location IDs
@@ -199,7 +202,7 @@ export const useBatches = () => {
           ...batch, 
           stock: stockData || 0,
           locations: locationNames
-        };
+        } as BatchWithCategory;
       })
     );
 
@@ -207,10 +210,16 @@ export const useBatches = () => {
   };
 
   const createBatch = async (batch: BatchInput): Promise<Batch> => {
+    const batchToCreate = { ...batch }; 
+    // Remove the location property if it exists since we don't need it in the database
+    if ('location' in batchToCreate) {
+      delete (batchToCreate as any).location;
+    }
+    
     const { data, error } = await supabase
       .from('batches')
       .insert([{ 
-        ...batch, 
+        ...batchToCreate, 
         created_at: new Date().toISOString() 
       }])
       .select()
@@ -228,10 +237,16 @@ export const useBatches = () => {
   };
 
   const updateBatch = async ({ id, data: batch }: { id: string; data: Partial<BatchInput> }): Promise<Batch> => {
+    const batchToUpdate = { ...batch }; 
+    // Remove the location property if it exists since we don't need it in the database
+    if ('location' in batchToUpdate) {
+      delete (batchToUpdate as any).location;
+    }
+    
     const { data, error } = await supabase
       .from('batches')
       .update({ 
-        ...batch, 
+        ...batchToUpdate, 
         updated_at: new Date().toISOString() 
       })
       .eq('id', id)
@@ -282,7 +297,7 @@ export const useBatches = () => {
       throw error;
     }
 
-    return data;
+    return data as unknown as BatchItem;
   };
 
   const createBatchItems = async ({
@@ -349,7 +364,7 @@ export const useBatches = () => {
       throw error;
     }
 
-    return data || [];
+    return data as unknown as BatchItem[];
   };
 
   // React Query hooks

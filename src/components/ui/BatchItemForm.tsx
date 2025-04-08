@@ -8,6 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useBatchItems } from '@/hooks/useBatchItems';
+import { BatchItem } from '@/components/pages/BatchItemsPage';
 
 // Define the form schema
 const formSchema = z.object({
@@ -21,11 +23,13 @@ const formSchema = z.object({
 export type BatchItemFormValues = z.infer<typeof formSchema>;
 
 interface BatchItemFormProps {
-  initialValues: any;
-  onSubmit: (values: BatchItemFormValues) => void;
+  initialValues?: any;
+  onSubmit?: (values: BatchItemFormValues) => void;
   onCancel: () => void;
   locations: any[];
   isEditing?: boolean;
+  batchId: string;
+  item?: BatchItem;
 }
 
 const BatchItemForm = ({
@@ -34,21 +38,38 @@ const BatchItemForm = ({
   onCancel,
   locations,
   isEditing = false,
+  batchId,
+  item,
 }: BatchItemFormProps) => {
+  const { createBatchItem, updateBatchItem } = useBatchItems(batchId);
+  
   // Initialize the form with default values or initial values if editing
   const form = useForm<BatchItemFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      serial_number: initialValues?.serial_number || '',
-      sku: initialValues?.sku || '',
-      location_id: initialValues?.location_id || '',
-      status: initialValues?.status || 'available',
-      notes: initialValues?.notes || '',
+      serial_number: item?.serial_number || initialValues?.serial_number || '',
+      sku: item?.sku || initialValues?.sku || '',
+      location_id: item?.location_id || initialValues?.location_id || '',
+      status: item?.status || initialValues?.status || 'available',
+      notes: item?.notes || initialValues?.notes || '',
     },
   });
 
   const handleSubmit = (values: BatchItemFormValues) => {
-    onSubmit(values);
+    if (onSubmit) {
+      onSubmit(values);
+    } else {
+      // Use the hook functions directly if no onSubmit was provided
+      if (isEditing && item) {
+        updateBatchItem({ id: item.id, data: values });
+      } else {
+        createBatchItem({
+          batch_id: batchId,
+          ...values,
+        });
+      }
+      onCancel();
+    }
   };
 
   return (

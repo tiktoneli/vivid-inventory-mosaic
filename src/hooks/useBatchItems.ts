@@ -28,7 +28,11 @@ export const useBatchItems = (batchId?: string) => {
       throw error;
     }
 
-    return data || [];
+    // Explicitly cast the status to ensure it's the correct type
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as "available" | "in_use" | "maintenance" | "retired"
+    }));
   };
 
   const createBatchItem = async (batchItem: BatchItemInput): Promise<BatchItem> => {
@@ -50,7 +54,11 @@ export const useBatchItems = (batchId?: string) => {
       throw error;
     }
 
-    return data;
+    // Cast the status to ensure it's the correct type
+    return {
+      ...data,
+      status: data.status as "available" | "in_use" | "maintenance" | "retired"
+    };
   };
 
   const updateBatchItem = async ({ id, data }: { id: string; data: Partial<BatchItemInput> }): Promise<BatchItem> => {
@@ -71,7 +79,11 @@ export const useBatchItems = (batchId?: string) => {
       throw error;
     }
 
-    return updatedItem;
+    // Cast the status to ensure it's the correct type
+    return {
+      ...updatedItem,
+      status: updatedItem.status as "available" | "in_use" | "maintenance" | "retired"
+    };
   };
 
   const deleteBatchItem = async (id: string): Promise<void> => {
