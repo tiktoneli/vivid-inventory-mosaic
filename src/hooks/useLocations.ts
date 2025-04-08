@@ -9,9 +9,10 @@ export type Location = {
   description: string | null;
   is_active: boolean;
   created_at: string;
+  updated_at: string | null;
 };
 
-export type LocationInput = Omit<Location, 'id' | 'created_at'>;
+export type LocationInput = Omit<Location, 'id' | 'created_at' | 'updated_at'>;
 
 export const useLocations = () => {
   const queryClient = useQueryClient();
@@ -53,6 +54,7 @@ export const useLocations = () => {
   };
 
   const updateLocation = async (id: string, location: Partial<LocationInput>): Promise<Location> => {
+    // No need to explicitly set updated_at as it's handled by the database trigger
     const { data, error } = await supabase
       .from('locations')
       .update(location)

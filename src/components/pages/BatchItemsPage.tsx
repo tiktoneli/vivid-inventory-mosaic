@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PlusCircle, ArrowLeft, Filter, Download, Upload } from 'lucide-react';
@@ -308,6 +307,7 @@ const BatchItemsPage = () => {
             batchId={batchId || ''}
             onCancel={() => setIsAddItemDialogOpen(false)}
             locations={locations}
+            isEditing={false}
           />
         </DialogContent>
       </Dialog>
@@ -344,6 +344,7 @@ const BatchItemsPage = () => {
               item={currentItem}
               onCancel={() => setIsEditDialogOpen(false)}
               locations={locations}
+              isEditing={true} // Explicitly set isEditing to true
             />
           )}
         </DialogContent>

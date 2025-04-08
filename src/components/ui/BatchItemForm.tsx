@@ -61,7 +61,18 @@ const BatchItemForm = ({
     } else {
       // Use the hook functions directly if no onSubmit was provided
       if (isEditing && item) {
-        updateBatchItem({ id: item.id, data: values });
+        // Fix: Pass the item id and the updated data to the updateBatchItem function
+        updateBatchItem({ 
+          id: item.id, 
+          data: {
+            batch_id: batchId,
+            serial_number: values.serial_number,
+            sku: values.sku,
+            location_id: values.location_id,
+            status: values.status,
+            notes: values.notes || null,
+          }
+        });
       } else {
         createBatchItem({
           batch_id: batchId,
@@ -87,6 +98,20 @@ const BatchItemForm = ({
               <FormLabel>Serial Number</FormLabel>
               <FormControl>
                 <Input placeholder="Enter serial number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="sku"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>SKU</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter SKU" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
