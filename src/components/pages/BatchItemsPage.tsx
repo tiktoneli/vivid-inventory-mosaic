@@ -46,14 +46,20 @@ const BatchItemsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
   
-  // Create a filtered items list based on search and filters
+  // Create a filtered items list based on search and filters with null checks
   const filteredItems = batchItems
-    .filter(item => 
-      (item.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-       item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       item.notes?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedLocation === 'All' || item.location_id === selectedLocation)
-    );
+    .filter(item => {
+      // Check if search term matches any of the fields, with null checks
+      const matchesSearch = searchTerm === '' || 
+        (item.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) || false) || 
+        (item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (item.notes?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+        
+      // Check if location matches
+      const matchesLocation = selectedLocation === 'All' || item.location_id === selectedLocation;
+      
+      return matchesSearch && matchesLocation;
+    });
   
   // Pagination logic
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);

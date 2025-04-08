@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Download, Upload, Search } from 'lucide-react';
 import BatchCard from '../ui/BatchCard';
@@ -117,12 +116,19 @@ const BatchManagement = () => {
     setIsBatchFormOpen(false);
   };
 
-  // Filter batches based on search term, category, and location
+  // Filter batches based on search term, category, and location with null checks
   const filteredBatches = batches.filter(batch => {
-    const matchesSearch = batch.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          batch.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    // Check if name or SKU match search term, with null checks
+    const matchesSearch = searchTerm === '' || 
+      ((batch.name?.toLowerCase().includes(searchTerm.toLowerCase())) || false) || 
+      ((batch.sku?.toLowerCase().includes(searchTerm.toLowerCase())) || false);
+    
+    // Check if category matches
     const matchesCategory = selectedCategory === 'All' || batch.category_id === selectedCategory;
+    
+    // Check if batch is active or showing inactive batches is enabled
     const matchesStatus = showInactiveBatches ? true : batch.is_active;
+    
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
