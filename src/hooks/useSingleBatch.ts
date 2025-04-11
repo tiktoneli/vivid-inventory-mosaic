@@ -11,5 +11,6 @@ export const useSingleBatch = (id: string | undefined) => {
     queryKey: ['batch', id],
     queryFn: () => id ? getBatchById(id) : null,
     enabled: !!id,
+    retry: 1, // Only retry once to avoid excessive retries on permanent failures
   });
 };

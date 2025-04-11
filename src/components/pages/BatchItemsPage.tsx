@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { PlusCircle, ArrowLeft, Filter, Download, Upload } from 'lucide-react';
+import { PlusCircle, ArrowLeft, Filter, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useBatches } from '@/hooks/useBatches';
 import { useBatchItems } from '@/hooks/useBatchItems';
@@ -16,6 +17,8 @@ import SearchAndFilter from '../ui/SearchAndFilter';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import PaginationControl from '../ui/PaginationControl';
 import { useSingleBatch } from '@/hooks/useSingleBatch';
+import LoadingState from '../common/LoadingState';
+import ErrorState from '../common/ErrorState';
 
 export type BatchItem = {
   id: string;
@@ -31,8 +34,8 @@ export type BatchItem = {
 
 const BatchItemsPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
-  const { data: batch, isLoading: batchLoading, isError: batchError } = useSingleBatch(batchId);
-  const { batchItems, isLoading: itemsLoading, createMultipleItems, updateBatchItem, deleteBatchItem } = useBatchItems(batchId);
+  const { data: batch, isLoading: batchLoading, isError: batchError, error: batchErrorDetails, refetch: refetchBatch } = useSingleBatch(batchId);
+  const { batchItems, isLoading: itemsLoading, createMultipleItems, updateBatchItem, deleteBatchItem, isError: itemsError, error: itemsErrorDetails, refetch: refetchItems } = useBatchItems(batchId);
   const { locations } = useLocations();
   
   // State for UI controls
@@ -51,9 +54,9 @@ const BatchItemsPage = () => {
     .filter(item => {
       // Check if search term matches any of the fields, with null checks
       const matchesSearch = searchTerm === '' || 
-        (item.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) || false) || 
-        (item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-        (item.notes?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+        (item.serial_number && item.serial_number.toLowerCase().includes(searchTerm.toLowerCase())) || 
+        (item.sku && item.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.notes && item.notes.toLowerCase().includes(searchTerm.toLowerCase()));
         
       // Check if location matches
       const matchesLocation = selectedLocation === 'All' || item.location_id === selectedLocation;
@@ -121,21 +124,29 @@ const BatchItemsPage = () => {
   
   // Loading state
   if (batchLoading || itemsLoading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return <LoadingState message="Loading batch details and items..." />;
   }
   
   // Error state
   if (batchError || !batch) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
-          <h2 className="font-medium">Error Loading Batch</h2>
-          <p>Could not load the requested batch. Please try again.</p>
-          <Link to="/batches" className="text-blue-500 hover:underline mt-2 inline-block">
-            &larr; Back to Batches
-          </Link>
-        </div>
-      </div>
+      <ErrorState
+        title="Error Loading Batch"
+        message="Could not load the requested batch. Please try again."
+        backLink="/batches"
+        backLinkText="Back to Batches"
+        onRetry={refetchBatch}
+      />
+    );
+  }
+
+  if (itemsError) {
+    return (
+      <ErrorState
+        title="Error Loading Items"
+        message="Could not load the batch items. Please try again."
+        onRetry={refetchItems}
+      />
     );
   }
   
