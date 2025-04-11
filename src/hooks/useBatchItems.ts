@@ -145,6 +145,7 @@ export const useBatchItems = (batchId?: string) => {
     return successCount;
   };
 
+  // Use useQuery to fetch batch items
   const batchItemsQuery = useQuery({
     queryKey: ['batchItems', batchId],
     queryFn: fetchBatchItems,
@@ -187,11 +188,13 @@ export const useBatchItems = (batchId?: string) => {
     },
   });
 
+  // Include refetch in the return value to fix the TypeScript error
   return {
     batchItems: batchItemsQuery.data || [],
     isLoading: batchItemsQuery.isLoading,
     isError: batchItemsQuery.isError,
     error: batchItemsQuery.error,
+    refetch: batchItemsQuery.refetch, // Add the refetch function here
     createBatchItem: createBatchItemMutation.mutate,
     updateBatchItem: updateBatchItemMutation.mutate,
     deleteBatchItem: deleteBatchItemMutation.mutate,
