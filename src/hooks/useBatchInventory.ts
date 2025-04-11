@@ -1,15 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getBatchInventory } from '@/utils/batchUtils';
-
-export type BatchInventory = {
-  batch_id: string | null;
-  batch_name: string | null;
-  category_id: string | null;
-  location_id: string | null;
-  location_name: string | null;
-  quantity: number | null;
-};
+import { BatchInventory } from '@/types'; // Import from types directory
 
 /**
  * Hook to fetch batch inventory data

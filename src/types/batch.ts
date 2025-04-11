@@ -34,4 +34,5 @@ export type BatchWithCategory = Omit<Batch, 'location'> & {
   locations?: string[];
 };
 
+// Make this type explicitly exported
 export type BatchInput = Omit<Batch, 'id' | 'created_at' | 'updated_at'>;

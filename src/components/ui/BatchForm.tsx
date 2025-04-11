@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -10,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Category } from '@/hooks/useCategories';
+import { Category } from '@/types';
 import { Label } from '@/components/ui/label';
 import BatchItemCreator from './BatchItemCreator';
+import { Location } from '@/types'; // Import the Location type
 
 // Define the form schema
 const batchSchema = z.object({
@@ -36,7 +36,7 @@ interface BatchFormProps {
   onSubmit: (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string; prefix?: string; notes?: string }) => void;
   onCancel: () => void;
   categories: { id: string; name: string; attributes: string[] }[];
-  locations?: { id: string; name: string }[];
+  locations?: { id: string; name: string }[]; // We'll adapt this to work with full Location objects
   isEditing?: boolean;
 }
 
@@ -247,7 +247,14 @@ const BatchForm: React.FC<BatchFormProps> = ({
                 onQuantityChange={(quantity) => setQuickAdd(prev => ({ ...prev, quantity }))}
                 location={quickAdd.location}
                 onLocationChange={(location) => setQuickAdd(prev => ({ ...prev, location }))}
-                locations={locations}
+                locations={locations.map(loc => ({
+                  id: loc.id,
+                  name: loc.name,
+                  description: null,
+                  is_active: true,
+                  created_at: new Date().toISOString(),
+                  updated_at: null
+                }))} // Convert simplified location objects to full Location type
                 prefix={quickAdd.prefix}
                 onPrefixChange={(prefix) => setQuickAdd(prev => ({ ...prev, prefix }))}
                 notes={quickAdd.notes}
