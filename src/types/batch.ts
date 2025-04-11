@@ -1,4 +1,3 @@
-
 import { Category } from './category';
 
 export type Batch = {
@@ -36,12 +35,3 @@ export type BatchWithCategory = Omit<Batch, 'location'> & {
 
 // Make this type explicitly exported
 export type BatchInput = Omit<Batch, 'id' | 'created_at' | 'updated_at'>;
-
-export type BatchInventory = {
-  batch_id: string;
-  batch_name: string;
-  location_id: string;
-  location_name: string;
-  category_id: string;
-  quantity: number;
-};
