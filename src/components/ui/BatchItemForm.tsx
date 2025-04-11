@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useBatchItems } from '@/hooks/useBatchItems';
-import { BatchItem } from '@/components/pages/BatchItemsPage';
+import { BatchItem, BatchItemStatus, BatchItemFormValues, Location } from '@/types';
 
 // Define the form schema
 const formSchema = z.object({
@@ -20,13 +19,11 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-export type BatchItemFormValues = z.infer<typeof formSchema>;
-
 interface BatchItemFormProps {
   initialValues?: any;
   onSubmit?: (values: BatchItemFormValues) => void;
   onCancel: () => void;
-  locations: any[];
+  locations: Location[];
   isEditing?: boolean;
   batchId: string;
   item?: BatchItem;

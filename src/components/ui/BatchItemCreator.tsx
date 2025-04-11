@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Location } from '@/types';
 
 interface BatchItemCreatorProps {
   enabled?: boolean;
@@ -13,7 +13,7 @@ interface BatchItemCreatorProps {
   onQuantityChange: (quantity: number) => void;
   location: string;
   onLocationChange: (locationId: string) => void;
-  locations: { id: string; name: string }[];
+  locations: Location[];
   prefix?: string;
   onPrefixChange?: (prefix: string) => void;
   notes?: string;

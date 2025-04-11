@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useLocations } from '@/hooks/useLocations';
 import { Loader2, Check, Search, Plus } from 'lucide-react';
+import { BatchItemSelectionValues } from '@/types';
 
 // Define the form schema
 const formSchema = z.object({
@@ -19,10 +19,8 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 interface BatchItemSelectionFormProps {
-  onSubmit: (values: FormValues) => void;
+  onSubmit: (values: BatchItemSelectionValues) => void;
   onCancel: () => void;
   batchId?: string;
   defaultSku?: string;
@@ -37,7 +35,7 @@ const BatchItemSelectionForm = ({
   const { locations, isLoading, isError } = useLocations();
 
   // Initialize the form
-  const form = useForm<FormValues>({
+  const form = useForm<BatchItemSelectionValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       quantity: 1,
@@ -54,7 +52,7 @@ const BatchItemSelectionForm = ({
     }
   }, [locations, form]);
 
-  const handleSubmit = (values: FormValues) => {
+  const handleSubmit = (values: BatchItemSelectionValues) => {
     onSubmit(values);
   };
 

@@ -1,10 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { BatchItem } from '@/components/pages/BatchItemsPage';
-
-export type BatchItemInput = Omit<BatchItem, 'id' | 'created_at' | 'updated_at'>;
+import { BatchItem, BatchItemInput, BatchItemStatus } from '@/types';
 
 export const useBatchItems = (batchId?: string) => {
   const queryClient = useQueryClient();
@@ -31,7 +28,7 @@ export const useBatchItems = (batchId?: string) => {
     // Explicitly cast the status to ensure it's the correct type
     return (data || []).map(item => ({
       ...item,
-      status: item.status as "available" | "in_use" | "maintenance" | "retired"
+      status: item.status as BatchItemStatus
     }));
   };
 
@@ -66,7 +63,7 @@ export const useBatchItems = (batchId?: string) => {
     // Cast the status to ensure it's the correct type
     return {
       ...data,
-      status: data.status as "available" | "in_use" | "maintenance" | "retired"
+      status: data.status as BatchItemStatus
     };
   };
 
@@ -91,7 +88,7 @@ export const useBatchItems = (batchId?: string) => {
     // Cast the status to ensure it's the correct type
     return {
       ...updatedItem,
-      status: updatedItem.status as "available" | "in_use" | "maintenance" | "retired"
+      status: updatedItem.status as BatchItemStatus
     };
   };
 
@@ -194,7 +191,7 @@ export const useBatchItems = (batchId?: string) => {
     isLoading: batchItemsQuery.isLoading,
     isError: batchItemsQuery.isError,
     error: batchItemsQuery.error,
-    refetch: batchItemsQuery.refetch, // Add the refetch function here
+    refetch: batchItemsQuery.refetch,
     createBatchItem: createBatchItemMutation.mutate,
     updateBatchItem: updateBatchItemMutation.mutate,
     deleteBatchItem: deleteBatchItemMutation.mutate,

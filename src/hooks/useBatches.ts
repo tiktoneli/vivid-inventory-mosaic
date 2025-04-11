@@ -1,65 +1,9 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getBatchById } from '@/utils/batchUtils';
 import { useSingleBatch } from './useSingleBatch';
-
-export type Batch = {
-  id: string;
-  name: string;
-  sku: string;
-  description: string | null;
-  category_id: string;
-  min_stock: number;
-  price: number | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string | null;
-  manufacturer: string | null;
-  serial_number: string | null;
-  warranty_info: string | null;
-  firmware_version: string | null;
-  mac_address: string | null;
-  network_specs: string | null;
-  license_keys: string | null;
-  compatibility_info: string | null;
-  power_consumption: string | null;
-  lifecycle_status: string | null;
-  batch_code?: string | null;
-  location?: string;
-};
-
-export type BatchWithCategory = Omit<Batch, 'location'> & {
-  categories: {
-    name: string;
-  };
-  stock?: number;
-  locations?: string[];
-};
-
-export type BatchInput = Omit<Batch, 'id' | 'created_at' | 'updated_at'>;
-
-export type BatchItem = {
-  id: string;
-  batch_id: string;
-  serial_number: string | null;
-  sku: string;
-  location_id: string;
-  status: "available" | "in_use" | "maintenance" | "retired";
-  notes: string | null;
-  created_at: string;
-  updated_at: string | null;
-};
-
-export type BatchInventory = {
-  batch_id: string | null;
-  batch_name: string | null;
-  category_id: string | null;
-  location_id: string | null;
-  location_name: string | null;
-  quantity: number | null;
-};
+import { Batch, BatchInput, BatchWithCategory, BatchItem, BatchInventory } from '@/types';
 
 export const useBatches = () => {
   const queryClient = useQueryClient();

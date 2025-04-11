@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getBatchById } from '@/utils/batchUtils';
-import { BatchWithCategory } from '@/hooks/useBatches';
+import { BatchWithCategory } from '@/types';
 
 /**
  * Hook to fetch a single batch by ID

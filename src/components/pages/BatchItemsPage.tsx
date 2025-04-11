@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PlusCircle, ArrowLeft, Filter, Download } from 'lucide-react';
@@ -19,18 +18,7 @@ import PaginationControl from '../ui/PaginationControl';
 import { useSingleBatch } from '@/hooks/useSingleBatch';
 import LoadingState from '../common/LoadingState';
 import ErrorState from '../common/ErrorState';
-
-export type BatchItem = {
-  id: string;
-  batch_id: string;
-  serial_number: string | null;
-  sku: string;
-  location_id: string;
-  status: "available" | "in_use" | "maintenance" | "retired";
-  notes: string | null;
-  created_at: string;
-  updated_at: string | null;
-};
+import { BatchItem, BatchItemSelectionValues } from '@/types';
 
 const BatchItemsPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
@@ -72,12 +60,7 @@ const BatchItemsPage = () => {
   );
 
   // Handle creating multiple items
-  const handleAddItems = (formData: { 
-    quantity: number, 
-    location_id: string,
-    prefix?: string,
-    notes?: string
-  }) => {
+  const handleAddItems = (formData: BatchItemSelectionValues) => {
     if (!batchId) return;
     
     createMultipleItems({

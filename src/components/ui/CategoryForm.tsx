@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { CategoryFormValues } from '@/types';
 
 // Define the attribute options that can be selected for a category
 const optionalAttributes = [
@@ -31,8 +31,6 @@ const categorySchema = z.object({
   description: z.string().optional(),
   attributes: z.array(z.string()).optional(),
 });
-
-type CategoryFormValues = z.infer<typeof categorySchema>;
 
 interface CategoryFormProps {
   initialValues?: Partial<CategoryFormValues>;
