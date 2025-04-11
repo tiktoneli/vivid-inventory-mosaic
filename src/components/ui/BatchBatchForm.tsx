@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Input } from './input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, RefreshCw } from 'lucide-react';
 import { Textarea } from './textarea';
 import BatchItemCreator from './BatchItemCreator';
+import { generateMultipleBatchCodes } from '@/utils/batchCodeGenerator';
+import { toast } from 'sonner';
 
 interface BatchBatchFormProps {
   onSubmit: (batches: any[], quickAdd: { enabled: boolean; quantity: number; location: string; prefix?: string; notes?: string }) => void;
@@ -32,9 +34,69 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
     prefix: '',
     notes: 'Auto-generated batch item'
   });
+  const [codePrefix, setCodePrefix] = useState<string>('BCH');
+  const [isGeneratingCodes, setIsGeneratingCodes] = useState<boolean>(false);
 
-  const addRow = () => {
-    setBatches([...batches, { ...EmptyBatchRow }]);
+  // Generate batch codes when batches array changes
+  useEffect(() => {
+    generateCodes();
+  }, []); // Only run on initial load
+
+  const generateCodes = async () => {
+    if (batches.length === 0) return;
+    
+    setIsGeneratingCodes(true);
+    try {
+      const codes = await generateMultipleBatchCodes(batches.length, codePrefix);
+      
+      // Update each batch with its auto-generated code
+      const updatedBatches = batches.map((batch, index) => ({
+        ...batch,
+        sku: batch.sku || codes[index] || `${codePrefix}-${Date.now().toString().slice(-6)}-${index+1}`
+      }));
+      
+      setBatches(updatedBatches);
+    } catch (error) {
+      console.error('Failed to generate batch codes:', error);
+      toast.error('Failed to generate batch codes', { 
+        description: 'Using fallback codes instead' 
+      });
+      
+      // Fallback code generation
+      const fallbackCodes = batches.map((_, index) => 
+        `${codePrefix}-${Date.now().toString().slice(-6)}-${index+1}`
+      );
+      
+      const updatedBatches = batches.map((batch, index) => ({
+        ...batch,
+        sku: batch.sku || fallbackCodes[index]
+      }));
+      
+      setBatches(updatedBatches);
+    } finally {
+      setIsGeneratingCodes(false);
+    }
+  };
+
+  const addRow = async () => {
+    const newBatches = [...batches, { ...EmptyBatchRow }];
+    setBatches(newBatches);
+    
+    // Generate code for the new row
+    try {
+      const codes = await generateMultipleBatchCodes(newBatches.length, codePrefix);
+      const lastCode = codes[codes.length - 1];
+      
+      // Only update the last row's code if it's empty
+      setBatches(prev => prev.map((batch, idx) => {
+        if (idx === prev.length - 1 && !batch.sku) {
+          return { ...batch, sku: lastCode };
+        }
+        return batch;
+      }));
+    } catch (error) {
+      console.error('Failed to generate code for new row:', error);
+    }
   };
 
   const removeRow = (index: number) => {
@@ -60,8 +122,41 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
     }
   };
 
+  const handlePrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCodePrefix(e.target.value);
+  };
+
+  const refreshCodes = () => {
+    generateCodes();
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="flex flex-wrap gap-4 items-end mb-4">
+        <div className="flex-1 min-w-[200px]">
+          <label htmlFor="prefix" className="block text-sm font-medium mb-1 dark:text-white">
+            Batch Code Prefix
+          </label>
+          <Input 
+            id="prefix" 
+            value={codePrefix} 
+            onChange={handlePrefixChange} 
+            placeholder="BCH" 
+            className="w-full"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={refreshCodes}
+          disabled={isGeneratingCodes}
+          className="mb-[1px]"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isGeneratingCodes ? 'animate-spin' : ''}`} />
+          Regenerate Codes
+        </Button>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[500px] border-collapse">
           <thead>
@@ -88,7 +183,7 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
                 </td>
                 <td className="p-2">
                   <Input
-                    placeholder="Enter code"
+                    placeholder="Auto-generated code"
                     value={batch.sku}
                     onChange={e => updateBatch(index, 'sku', e.target.value)}
                     className="w-full"

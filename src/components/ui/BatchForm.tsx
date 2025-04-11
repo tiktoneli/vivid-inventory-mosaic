@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Category } from '@/types';
+import { Category, Location } from '@/types';
 import { Label } from '@/components/ui/label';
 import BatchItemCreator from './BatchItemCreator';
-import { Location } from '@/types'; // Import the Location type
+import { generateBatchCode } from '@/utils/batchCodeGenerator';
+import { toast } from 'sonner';
 
 // Define the form schema
 const batchSchema = z.object({
@@ -36,7 +38,7 @@ interface BatchFormProps {
   onSubmit: (values: any, quickAdd?: { enabled: boolean; quantity: number; location: string; prefix?: string; notes?: string }) => void;
   onCancel: () => void;
   categories: { id: string; name: string; attributes: string[] }[];
-  locations?: { id: string; name: string }[]; // We'll adapt this to work with full Location objects
+  locations?: { id: string; name: string }[]; // Simplified location objects
   isEditing?: boolean;
 }
 
@@ -48,21 +50,45 @@ const BatchForm: React.FC<BatchFormProps> = ({
   locations = [],
   isEditing = false
 }) => {
+  // Load form with either initialValues or default values
+  const defaultValues = initialValues || {
+    name: '',
+    sku: '',
+    category_id: '',
+    min_stock: 0,
+    is_active: true,
+    description: '',
+    price: null,
+    manufacturer: null,
+    warranty_info: null,
+    lifecycle_status: null,
+  };
+  
   const form = useForm<BatchFormValues>({
     resolver: zodResolver(batchSchema),
-    defaultValues: initialValues || {
-      name: '',
-      sku: '',
-      category_id: '',
-      min_stock: 0,
-      is_active: true,
-      description: '',
-      price: null,
-      manufacturer: null,
-      warranty_info: null,
-      lifecycle_status: null,
-    },
+    defaultValues,
   });
+
+  // Generate batch code when creating new batch
+  useEffect(() => {
+    if (!isEditing && !initialValues?.sku) {
+      // Only generate code for new batches with no initial SKU
+      const generateCode = async () => {
+        try {
+          const code = await generateBatchCode();
+          form.setValue('sku', code);
+        } catch (error) {
+          console.error('Failed to generate batch code:', error);
+          toast.error('Failed to generate batch code', { 
+            description: 'Using default code instead' 
+          });
+          form.setValue('sku', `BCH-${Date.now().toString().slice(-6)}`);
+        }
+      };
+      
+      generateCode();
+    }
+  }, [isEditing, initialValues, form]);
 
   // Quick add state - enabled set to false by default to make it optional
   const [quickAdd, setQuickAdd] = useState({
@@ -119,10 +145,13 @@ const BatchForm: React.FC<BatchFormProps> = ({
                 name="sku"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Batch Code * (Unique)</FormLabel>
+                    <FormLabel>Batch Code * (Auto-generated)</FormLabel>
                     <FormControl>
                       <Input placeholder="Enter batch code" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      Auto-generated but can be modified if needed
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -254,7 +283,7 @@ const BatchForm: React.FC<BatchFormProps> = ({
                   is_active: true,
                   created_at: new Date().toISOString(),
                   updated_at: null
-                }))} // Convert simplified location objects to full Location type
+                }))}
                 prefix={quickAdd.prefix}
                 onPrefixChange={(prefix) => setQuickAdd(prev => ({ ...prev, prefix }))}
                 notes={quickAdd.notes}
