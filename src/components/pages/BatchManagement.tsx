@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Download, Upload, Search } from 'lucide-react';
 import BatchCard from '../ui/BatchCard';
@@ -5,7 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import BatchForm from '../ui/BatchForm';
 import { Link } from 'react-router-dom';
-import { useBatches, BatchInput } from '@/hooks/useBatches';
+import { useBatches } from '@/hooks/useBatches';
+import { BatchInput } from '@/types'; // Update import to get BatchInput from types
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
