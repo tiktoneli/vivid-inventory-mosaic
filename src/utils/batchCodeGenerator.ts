@@ -10,9 +10,10 @@ import { supabase } from '@/integrations/supabase/client';
  * Format: PREFIX-YYYYMMDD-XXX where XXX is an incremental number
  * 
  * @param prefix Optional prefix for the batch code (default: 'BCH')
+ * @param forceNew If true, generates a new code regardless of any existing value
  * @returns A promise that resolves to a unique batch code
  */
-export async function generateBatchCode(prefix: string = 'BCH'): Promise<string> {
+export async function generateBatchCode(prefix: string = 'BCH', forceNew: boolean = false): Promise<string> {
   // Format: PREFIX-YYYYMMDD-XXX
   const today = new Date();
   const dateStr = today.getFullYear().toString() +
@@ -48,11 +49,12 @@ export async function generateBatchCode(prefix: string = 'BCH'): Promise<string>
  * 
  * @param count Number of batch codes to generate
  * @param prefix Optional prefix for the batch codes (default: 'BCH')
+ * @param forceNew If true, generates new codes regardless of any existing values
  * @returns A promise that resolves to an array of unique batch codes
  */
-export async function generateMultipleBatchCodes(count: number, prefix: string = 'BCH'): Promise<string[]> {
+export async function generateMultipleBatchCodes(count: number, prefix: string = 'BCH', forceNew: boolean = false): Promise<string[]> {
   // Get a base batch code first
-  const baseCode = await generateBatchCode(prefix);
+  const baseCode = await generateBatchCode(prefix, forceNew);
   const [prefixPart, datePart, seqPart] = baseCode.split('-');
   const sequence = parseInt(seqPart);
   

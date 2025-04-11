@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Input } from './input';
@@ -49,7 +48,7 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
     try {
       const codes = await generateMultipleBatchCodes(batches.length, codePrefix);
       
-      // Update each batch with its auto-generated code
+      // Update each batch with its auto-generated code, only if the sku field is empty
       const updatedBatches = batches.map((batch, index) => ({
         ...batch,
         sku: batch.sku || codes[index] || `${codePrefix}-${Date.now().toString().slice(-6)}-${index+1}`
@@ -76,6 +75,10 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
     } finally {
       setIsGeneratingCodes(false);
     }
+  };
+
+  const refreshCodes = () => {
+    generateCodes();
   };
 
   const addRow = async () => {
@@ -124,10 +127,6 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
 
   const handlePrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCodePrefix(e.target.value);
-  };
-
-  const refreshCodes = () => {
-    generateCodes();
   };
 
   return (

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import BatchItemCreator from './BatchItemCreator';
 import { generateBatchCode } from '@/utils/batchCodeGenerator';
 import { toast } from 'sonner';
+import { RefreshCw } from 'lucide-react';
 
 // Define the form schema
 const batchSchema = z.object({
@@ -69,26 +70,30 @@ const BatchForm: React.FC<BatchFormProps> = ({
     defaultValues,
   });
 
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+
   // Generate batch code when creating new batch
   useEffect(() => {
     if (!isEditing && !initialValues?.sku) {
-      // Only generate code for new batches with no initial SKU
-      const generateCode = async () => {
-        try {
-          const code = await generateBatchCode();
-          form.setValue('sku', code);
-        } catch (error) {
-          console.error('Failed to generate batch code:', error);
-          toast.error('Failed to generate batch code', { 
-            description: 'Using default code instead' 
-          });
-          form.setValue('sku', `BCH-${Date.now().toString().slice(-6)}`);
-        }
-      };
-      
       generateCode();
     }
-  }, [isEditing, initialValues, form]);
+  }, [isEditing, initialValues]);
+
+  const generateCode = async () => {
+    setIsGeneratingCode(true);
+    try {
+      const code = await generateBatchCode();
+      form.setValue('sku', code);
+    } catch (error) {
+      console.error('Failed to generate batch code:', error);
+      toast.error('Failed to generate batch code', { 
+        description: 'Using default code instead' 
+      });
+      form.setValue('sku', `BCH-${Date.now().toString().slice(-6)}`);
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
 
   // Quick add state - enabled set to false by default to make it optional
   const [quickAdd, setQuickAdd] = useState({
@@ -145,10 +150,23 @@ const BatchForm: React.FC<BatchFormProps> = ({
                 name="sku"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Batch Code * (Auto-generated)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter batch code" {...field} />
-                    </FormControl>
+                    <FormLabel>Batch Code *</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input placeholder="Enter batch code" {...field} />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="icon"
+                        onClick={generateCode}
+                        disabled={isGeneratingCode}
+                        className="flex-shrink-0"
+                        title="Generate new code"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${isGeneratingCode ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
                     <FormDescription>
                       Auto-generated but can be modified if needed
                     </FormDescription>
