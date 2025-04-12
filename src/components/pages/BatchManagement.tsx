@@ -129,6 +129,19 @@ const BatchManagement = () => {
     }
   };
 
+  // Close form handlers with proper cleanup
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    // Add a small delay before cleanup to ensure proper DOM update
+    setTimeout(() => {
+      setEditingBatch(null);
+    }, 100);
+  };
+
+  const handleCloseBatchForm = () => {
+    setIsBatchFormOpen(false);
+  };
+
   // Filter batches based on search term, category, and location with null checks
   const filteredBatches = batches.filter(batch => {
     // Check if name or SKU match search term, with null checks
@@ -318,8 +331,19 @@ const BatchManagement = () => {
       </section>
 
       {/* Batch Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
+      <Dialog open={isFormOpen} onOpenChange={handleCloseForm}>
+        <DialogContent 
+          className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0"
+          onInteractOutside={(e) => {
+            // Prevent closing on outside interaction to avoid focus issues
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            // Still allow escape key to work, but with controlled closing
+            e.preventDefault();
+            handleCloseForm();
+          }}
+        >
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
             <DialogTitle className="text-[#445372] dark:text-white">
               {editingBatch ? 'Edit Batch' : 'Add New Batch'}
@@ -334,7 +358,7 @@ const BatchManagement = () => {
             <BatchForm 
               initialValues={editingBatch}
               onSubmit={handleFormSubmit}
-              onCancel={() => setIsFormOpen(false)}
+              onCancel={handleCloseForm}
               categories={categories.map(cat => ({ 
                 id: cat.id, 
                 name: cat.name, 
@@ -348,8 +372,19 @@ const BatchManagement = () => {
       </Dialog>
 
       {/* Batch Form Dialog */}
-      <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
-        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
+      <Dialog open={isBatchFormOpen} onOpenChange={handleCloseBatchForm}>
+        <DialogContent 
+          className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0"
+          onInteractOutside={(e) => {
+            // Prevent closing on outside interaction to avoid focus issues
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            // Still allow escape key to work, but with controlled closing
+            e.preventDefault();
+            handleCloseBatchForm();
+          }}
+        >
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
             <DialogTitle className="text-[#445372] dark:text-white">Add Multiple Batches</DialogTitle>
             <DialogDescription>
@@ -359,7 +394,7 @@ const BatchManagement = () => {
           <div className="p-4 md:p-6 overflow-auto max-h-[calc(90vh-120px)]">
             <BatchBatchForm 
               onSubmit={handleBatchFormSubmit}
-              onCancel={() => setIsBatchFormOpen(false)}
+              onCancel={handleCloseBatchForm}
               categories={categories}
               locations={locations}
             />
