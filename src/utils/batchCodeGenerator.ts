@@ -49,14 +49,18 @@ export async function generateBatchCode(prefix: string = 'BCH', forceNew: boolea
  * 
  * @param count Number of batch codes to generate
  * @param prefix Optional prefix for the batch codes (default: 'BCH')
- * @param forceNew If true, generates new codes regardless of any existing values
+ * @param forceNew If true, always generates fresh new codes
  * @returns A promise that resolves to an array of unique batch codes
  */
 export async function generateMultipleBatchCodes(count: number, prefix: string = 'BCH', forceNew: boolean = false): Promise<string[]> {
+  if (count <= 0) return [];
+  
   // Get a base batch code first
   const baseCode = await generateBatchCode(prefix, forceNew);
+  if (!baseCode) return Array(count).fill('').map((_, i) => `${prefix}-${Date.now()}-${i+1}`);
+  
   const [prefixPart, datePart, seqPart] = baseCode.split('-');
-  const sequence = parseInt(seqPart);
+  const sequence = parseInt(seqPart || '1');
   
   // Generate subsequent codes
   const codes: string[] = [baseCode];

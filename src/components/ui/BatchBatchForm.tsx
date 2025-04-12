@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Input } from './input';
@@ -77,8 +78,38 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
     }
   };
 
-  const refreshCodes = () => {
-    generateCodes();
+  const refreshCodes = async () => {
+    setIsGeneratingCodes(true);
+    try {
+      // Get new batch codes for all batches
+      const newCodes = await generateMultipleBatchCodes(batches.length, codePrefix, true);
+      
+      // Update all batch codes regardless of whether they're empty or not
+      const updatedBatches = batches.map((batch, index) => ({
+        ...batch,
+        sku: newCodes[index] || `${codePrefix}-${Date.now().toString().slice(-6)}-${index+1}`
+      }));
+      
+      setBatches(updatedBatches);
+      toast.success('Batch codes regenerated successfully');
+    } catch (error) {
+      console.error('Failed to refresh batch codes:', error);
+      toast.error('Failed to regenerate batch codes');
+      
+      // Fallback code generation
+      const fallbackCodes = batches.map((_, index) => 
+        `${codePrefix}-${Date.now().toString().slice(-6)}-${index+1}`
+      );
+      
+      const updatedBatches = batches.map((batch, index) => ({
+        ...batch,
+        sku: fallbackCodes[index]
+      }));
+      
+      setBatches(updatedBatches);
+    } finally {
+      setIsGeneratingCodes(false);
+    }
   };
 
   const addRow = async () => {
@@ -152,7 +183,7 @@ const BatchBatchForm: React.FC<BatchBatchFormProps> = ({ onSubmit, onCancel, cat
           className="mb-[1px]"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isGeneratingCodes ? 'animate-spin' : ''}`} />
-          Regenerate Codes
+          Regenerate All Codes
         </Button>
       </div>
 
