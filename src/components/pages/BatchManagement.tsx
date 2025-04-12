@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { Plus, Download, Upload, Search, ChevronDown, Package } from 'lucide-react';
+import { Plus, Download, Upload, Search } from 'lucide-react';
 import BatchCard from '../ui/BatchCard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import BatchForm from '../ui/BatchForm';
 import { Link } from 'react-router-dom';
 import { useBatches } from '@/hooks/useBatches';
-import { BatchInput } from '@/types';
+import { BatchInput } from '@/types'; // Update import to get BatchInput from types
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
@@ -16,7 +16,6 @@ import BatchBatchForm from '../ui/BatchBatchForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SearchAndFilter from '../ui/SearchAndFilter';
 import PaginationControl from '../ui/PaginationControl';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const BatchManagement = () => {
   const { batches, isLoading: batchesLoading, createBatch, updateBatch, deleteBatch, createBatchItems } = useBatches();
@@ -118,29 +117,6 @@ const BatchManagement = () => {
     
     setIsBatchFormOpen(false);
   };
-  
-  // Handler for opening the appropriate form based on user choice
-  const handleAddBatch = (option: 'single' | 'multiple') => {
-    if (option === 'single') {
-      setEditingBatch(null);
-      setIsFormOpen(true);
-    } else {
-      setIsBatchFormOpen(true);
-    }
-  };
-
-  // Close form handlers with proper cleanup
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    // Add a small delay before cleanup to ensure proper DOM update
-    setTimeout(() => {
-      setEditingBatch(null);
-    }, 100);
-  };
-
-  const handleCloseBatchForm = () => {
-    setIsBatchFormOpen(false);
-  };
 
   // Filter batches based on search term, category, and location with null checks
   const filteredBatches = batches.filter(batch => {
@@ -212,22 +188,21 @@ const BatchManagement = () => {
               Manage Locations
             </Link>
             <div className="flex gap-2">
-              {/* Combined dropdown button for adding batches */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="bg-[#00859e] text-white hover:bg-[#00859e]/90">
-                    <Plus className="mr-2 h-4 w-4" /> Add Batch <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleAddBatch('single')}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Single Batch
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAddBatch('multiple')}>
-                    <Package className="mr-2 h-4 w-4" /> Add Multiple Batches
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button 
+                onClick={() => {
+                  setEditingBatch(null);
+                  setIsFormOpen(true);
+                }}
+                className="bg-[#00859e] text-white hover:bg-[#00859e]/90"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add New Batch
+              </Button>
+              <Button 
+                className="bg-[#00859e] text-white hover:bg-[#00859e]/90"
+                onClick={() => setIsBatchFormOpen(true)}
+              >
+                <Upload className="mr-2 h-4 w-4" /> Add Multiple Batches
+              </Button>
             </div>
           </div>
         </div>
@@ -331,19 +306,8 @@ const BatchManagement = () => {
       </section>
 
       {/* Batch Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={handleCloseForm}>
-        <DialogContent 
-          className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0"
-          onInteractOutside={(e) => {
-            // Prevent closing on outside interaction to avoid focus issues
-            e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            // Still allow escape key to work, but with controlled closing
-            e.preventDefault();
-            handleCloseForm();
-          }}
-        >
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
             <DialogTitle className="text-[#445372] dark:text-white">
               {editingBatch ? 'Edit Batch' : 'Add New Batch'}
@@ -358,7 +322,7 @@ const BatchManagement = () => {
             <BatchForm 
               initialValues={editingBatch}
               onSubmit={handleFormSubmit}
-              onCancel={handleCloseForm}
+              onCancel={() => setIsFormOpen(false)}
               categories={categories.map(cat => ({ 
                 id: cat.id, 
                 name: cat.name, 
@@ -372,19 +336,8 @@ const BatchManagement = () => {
       </Dialog>
 
       {/* Batch Form Dialog */}
-      <Dialog open={isBatchFormOpen} onOpenChange={handleCloseBatchForm}>
-        <DialogContent 
-          className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0"
-          onInteractOutside={(e) => {
-            // Prevent closing on outside interaction to avoid focus issues
-            e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            // Still allow escape key to work, but with controlled closing
-            e.preventDefault();
-            handleCloseBatchForm();
-          }}
-        >
+      <Dialog open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
+        <DialogContent className="sm:max-w-[95vw] md:max-w-[800px] max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 md:p-6 pb-0 md:pb-0">
             <DialogTitle className="text-[#445372] dark:text-white">Add Multiple Batches</DialogTitle>
             <DialogDescription>
@@ -394,7 +347,7 @@ const BatchManagement = () => {
           <div className="p-4 md:p-6 overflow-auto max-h-[calc(90vh-120px)]">
             <BatchBatchForm 
               onSubmit={handleBatchFormSubmit}
-              onCancel={handleCloseBatchForm}
+              onCancel={() => setIsBatchFormOpen(false)}
               categories={categories}
               locations={locations}
             />
