@@ -9,3 +9,5 @@ export type BatchInventory = {
   category_id: string;
   quantity: number;
 };
+
+// Add any other inventory related types here
