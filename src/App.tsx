@@ -21,13 +21,11 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<ErrorBoundary><Index /></ErrorBoundary>} />
             <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-            <Route path="batches" element={<ErrorBoundary><BatchManagement /></ErrorBoundary>} />
             <Route path="products" element={<Navigate to="/batches" replace />} />
             <Route path="batches/:batchId/items" element={<ErrorBoundary><BatchItemsPage /></ErrorBoundary>} />
             <Route path="products/:productId/items" element={<Navigate to="/batches/:productId/items" replace />} />
             <Route path="categories" element={<ErrorBoundary><CategoryManagement /></ErrorBoundary>} />
             <Route path="locations" element={<ErrorBoundary><LocationManagement /></ErrorBoundary>} />
-            <Route path="inventory" element={<ErrorBoundary><InventoryControl /></ErrorBoundary>} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

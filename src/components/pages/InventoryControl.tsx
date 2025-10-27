@@ -335,6 +335,15 @@ const InventoryControl = () => {
                     <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Action
                     </th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Days Below
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-card">

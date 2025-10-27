@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export async function generateBatchCode(prefix: string = 'BCH', forceNew: boolean = false): Promise<string> {
   // Format: PREFIX-YYYYMMDD-XXX
+  
   const today = new Date();
   const dateStr = today.getFullYear().toString() +
     (today.getMonth() + 1).toString().padStart(2, '0') +
