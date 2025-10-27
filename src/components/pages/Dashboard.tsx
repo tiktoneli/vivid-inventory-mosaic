@@ -14,8 +14,6 @@ const Dashboard = () => {
     { id: 1, type: 'in', quantity: 15, product: 'Premium Bluetooth Headphones', date: '2023-11-10', user: 'John Doe' },
     { id: 2, type: 'out', quantity: 5, product: 'Ergonomic Office Chair', date: '2023-11-09', user: 'Jane Smith' },
     { id: 3, type: 'in', quantity: 20, product: 'Ultra HD Smart TV 55"', date: '2023-11-08', user: 'John Doe' },
-    { id: 4, type: 'out', quantity: 3, product: 'Stainless Steel Water Bottle', date: '2023-11-07', user: 'Mike Brown' },
-    { id: 5, type: 'out', quantity: 2, product: 'Wireless Charging Pad', date: '2023-11-06', user: 'Sarah Williams' },
   ];
 
   const lowStockProducts = [
@@ -39,16 +37,6 @@ const Dashboard = () => {
       minStock: 10,
       price: 899.99
     },
-    {
-      id: '7',
-      name: 'Ceramic Coffee Mug Set',
-      category: 'Kitchen',
-      sku: 'KIT-MUG-201',
-      location: 'Warehouse C',
-      stock: 5,
-      minStock: 20,
-      price: 39.99
-    }
   ];
 
   // Sample data for charts
@@ -141,7 +129,9 @@ const Dashboard = () => {
                 <TabsList className="grid grid-cols-3">
                   <TabsTrigger value="7d">7d</TabsTrigger>
                   <TabsTrigger value="30d">30d</TabsTrigger>
-                  <TabsTrigger value="90d">90d</TabsTrigger>
+                  <Users>
+                    <TabsTrigger value="90d">90d</TabsTrigger>
+                  </Users>
                 </TabsList>
               </Tabs>
             </div>
