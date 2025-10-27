@@ -143,18 +143,6 @@ const BatchItemsPage = () => {
             Back to Batches
           </Link>
         </div>
-                <div className="flex items-center gap-2 mb-2">
-          <Link to="/batches" className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4 inline mr-1" />
-            Back to Batches
-          </Link>
-        </div>
-                <div className="flex items-center gap-2 mb-2">
-          <Link to="/batches" className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4 inline mr-1" />
-            Back to Batches
-          </Link>
-        </div>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-[#445372] dark:text-white">{batch.name}</h1>
@@ -162,6 +150,22 @@ const BatchItemsPage = () => {
               <span className="font-medium">Code:</span> {batch.sku} | 
               <span className="font-medium ml-2">Category:</span> {batch.categories?.name}
             </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddItemDialogOpen(true)}
+              className="whitespace-nowrap"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsQuickAddDialogOpen(true)}
+              className="whitespace-nowrap bg-[#00859e]/10 border-[#00859e]/20 hover:bg-[#00859e]/20"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Quick Add Items
+            </Button>
           </div>
         </div>
       </div>
