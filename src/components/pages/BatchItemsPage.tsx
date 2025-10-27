@@ -115,7 +115,7 @@ const BatchItemsPage = () => {
     return (
       <ErrorState
         title="Error Loading Batch"
-        message="Could not load the requested batch."
+        message="Could not load the requested batch. Please try again."
         backLink="/batches"
         backLinkText="Back to Batches"
         onRetry={refetchBatch}
